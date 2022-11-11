@@ -1,0 +1,153 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    
+   <meta http-equiv="x-ua-compatible" content="IE=edge">
+	<meta charset="utf-8">
+    <title>My App</title>
+    
+     <!--  Define const -->
+    <script type="text/javascript">
+    </script>
+    
+    <!--  PWA Setting Start-->
+		<!--  https://medium.com/frochu/html-meta-viewport-setting-69fbb06ed3d8  -->
+   		<meta name="viewport" content="width=device-width, initial-scale=1">
+   		
+	    <!-- Add to homescreen for Chrome on Android -->
+	    <!--  
+	    <meta name="mobile-web-app-capable" content="yes">
+	    <meta name="application-name" content="Tele-Class Web Version">
+	    <link rel="icon" sizes="192x192" href="./icon-40.png">
+    	-->
+    	
+    	
+	   	<!-- Add to homescreen for Safari on iOS -->
+	   	<!--  
+	    <meta name="apple-mobile-web-app-capable" content="yes">
+	    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+	    <meta name="apple-mobile-web-app-title" content="Tele-Class Web Version">
+	    <link rel="apple-touch-icon" href="./icon-40.png">
+    	-->
+    	
+    	<!-- Desktop icon -->
+		<link rel="shortcut icon" href="./icon-40.png">
+		
+		<!-- Color the status bar on mobile devices -->
+		<meta name="theme-color" content="#00EABD">
+		
+		<!-- Web Application Manifest -->
+		<link rel="manifest" href="./manifest.json">
+		
+		<!-- Script to register service worker -->
+		<script type="text/javascript">
+      
+			if ('serviceWorker' in navigator) {
+				
+				navigator.serviceWorker.register('./service_worker.js',{
+					scope: '/'
+				}).then(function(registration) {
+					console.log('[Service Worker] Registration SUCCESS', registration.scope);
+				}, function(err) {
+					console.log('[Service Worker] Registration ERROR: ', err);
+				});
+				
+	        }
+
+
+			
+			const mql = window.matchMedia('(display-mode: standalone)')
+			let isStandalone = mql.matches
+			mql.onchange = (e) => {
+				let isStandalone = e.matches
+			    if (isStandalone) {
+			    	redirectToEntryPointUrl()
+			  	} 
+			}
+			if(isStandalone){
+
+			}
+			
+      
+		</script>
+    <!--  PWA Setting end-->
+    
+     <style>
+    	#install_page {
+	    	margin: 0 0 10px;
+	    	position: absolute;
+	    	top: 0px;
+	    	left: 0px;
+	    	width: 100%;
+	    	height: 100%;
+	    	background-color: #e6e6e6;
+	    	text-align: center;
+	    	font-size: 22px;
+	    	display: flex;
+	    	justify-content: center;
+	    	align-content: center;
+	    	flex-direction: column;
+	    	font-family: system-ui;
+    	}
+    	
+    	.txt-btn{
+   		    background-color: #00EABD;
+		    height: 45px;
+		    width: 198px;
+		    display: inline-block;
+		    pointer-events: auto;
+		    vertical-align: middle;
+		    cursor: pointer;
+		    line-height: 32px;
+		    text-align: center;
+		    border-radius: 5px;
+		    color: white;
+		    font-size: 21px;
+		    border: 5px;
+		    box-sizing: border-box;
+    	}
+    	
+    	.txt-btn:disabled {
+    		background-color: gray;
+		}
+    </style>
+    
+</head>
+
+<body>
+	<div id="install_page">
+		<div>
+			<b>Installation </b>
+			
+		</div>
+		<div id="button-container">
+			<button id="install-pwa-btn" class="txt-btn" onclick="installPwa()" disabled>Install</button>
+		</div>
+	</div>
+    <script type="text/javascript">
+    
+ 		// Get PWA Install button
+		var beforeInstallPrompt = null;
+		window.addEventListener("beforeinstallprompt", function (event) {
+			
+			beforeInstallPrompt = event;
+			document.getElementById("install-pwa-btn").removeAttribute("disabled");
+			
+		}, function (event) {
+		    console.error("beforeinstallprompt ERROR: ", event);
+		});
+	
+		function installPwa() {
+		  if (beforeInstallPrompt) beforeInstallPrompt.prompt();
+		}
+    
+		// Block install if not using https
+	    if (window.location.protocol != "https:") {
+			document.getElementById("button-container").innerHTML = '<p>To install, please use HTTPS access this page.</p>'
+		}
+    </script>
+    
+</body>
+
+</html>
