@@ -1,8 +1,8 @@
 // Files to cache
 const cacheName = 'kitto-app-v1';
 const contentToCache = [
-  '/',
-  '/index.html',
+  './',
+  './index.html',
   '/icon-40.png',
 ];
 
