@@ -1,5 +1,5 @@
 // Files to cache
-const cacheName = 'kitto-app-v1';
+const cacheName = 'kitto-app-v2';
 const contentToCache = [
   './',
   './index.html',
