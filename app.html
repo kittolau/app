@@ -1,2 +1,15 @@
 page:
-<iframe width="1280" height="800" src="https://queue.hkticketing.com/hotshow.html" sandbox></iframe>
+<iframe id='refresh-1' width="1280" height="800" src="" sandbox></iframe>
+<script>
+var initialUrl = "https://queue.hkticketing.com/hotshow.html"
+var iframe = document.getElementById("refresh-1")
+iframe.onload(function() {
+   var currentUrl = frame.contentWindow.location
+   if(initialUrl != currentUrl){
+      alert("success")
+   }else{
+     iframe.src=initialUrl
+   }
+}
+iframe.src=initialUrl
+</script>
