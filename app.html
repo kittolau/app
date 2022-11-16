@@ -3,7 +3,7 @@ page:
 <script>
 var initialUrl = "https://queue.hkticketing.com/hotshow.html"
 var iframe = document.getElementById("refresh-1")
-iframe.onload(function() {
+iframe.onload=function() {
    var currentUrl = frame.contentWindow.location
    if(initialUrl != currentUrl){
       alert("success")
@@ -13,6 +13,6 @@ iframe.onload(function() {
       },1000)
      
    }
-})
+}
 iframe.src=initialUrl
 </script>
