@@ -39,10 +39,14 @@ self.addEventListener('fetch', (e) => {
   let isCachedUrl = contentToCache.find(cachedUrl => {
     let cachedUrlAbs = new URL(cachedUrl, self.location.origin).href
 
-    if(e.request.url == cachedUrlAbs) return cachedUrl
+    if(e.request.url == cachedUrlAbs){
+      console.log("[Service Worker] response cached: "+e.request.url);
+      return cachedUrl
+    }
   });
   if(isCachedUrl == null) return
 
+  console.log("[Service Worker] skip cache: "+e.request.url);
 
   e.respondWith((async () => {
     const r = await caches.match(e.request);
