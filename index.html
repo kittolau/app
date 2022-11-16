@@ -55,17 +55,16 @@
 				
 	        }
 
-
-			
+			let isInWebAppiOS = (window.navigator.standalone == true);		
 			const mql = window.matchMedia('(display-mode: standalone)')
 			let isStandalone = mql.matches
 			mql.onchange = (e) => {
 				let isStandalone = e.matches
-			    if (isStandalone) {
-			    	window.location.replace("./app.html");
+			    	if (isStandalone) {
+			    		window.location.replace("./app.html");
 			  	} 
 			}
-			if(isStandalone){
+			if(isStandalone || isInWebAppiOS){
 				window.location.replace("./app.html");
 			}
 			
