@@ -62,7 +62,7 @@
 			mql.onchange = (e) => {
 				let isStandalone = e.matches
 			    if (isStandalone) {
-			    	redirectToEntryPointUrl()
+			    	window.location.replace("./app.html");
 			  	} 
 			}
 			if(isStandalone){
