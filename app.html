@@ -4,7 +4,7 @@ page:
 var initialUrl = "https://queue.hkticketing.com/hotshow.html"
 var iframe = document.getElementById("refresh-1")
 iframe.onload=function() {
-   var currentUrl = frame.contentWindow.location
+   var currentUrl = iframe.contentWindow.location
    if(initialUrl != currentUrl){
       alert("success")
    }else{
