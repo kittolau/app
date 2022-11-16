@@ -142,9 +142,13 @@
 		}
     
 		// Block install if not using https
-	    if (window.location.protocol != "https:") {
+	    	if (window.location.protocol != "https:") {
 			document.getElementById("button-container").innerHTML = '<p>To install, please use HTTPS access this page.</p>'
 		}
+	    
+
+		document.getElementById("button-container").innerHTML = '<p>'+isInWebAppiOS+isStandalone'</p>'
+		
     </script>
     
 </body>
