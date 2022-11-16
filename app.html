@@ -8,8 +8,11 @@ iframe.onload(function() {
    if(initialUrl != currentUrl){
       alert("success")
    }else{
-     iframe.src=initialUrl
+      setTimeout(function(){
+         iframe.src=initialUrl
+      },1000)
+     
    }
-}
+})
 iframe.src=initialUrl
 </script>
