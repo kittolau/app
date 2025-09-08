@@ -175,8 +175,25 @@
       e.target.value = '';
     });
 
-    // Add one question by default
-    window.onload = () => { addQuestion(); };
+    // Auto-import stem-qa-data.json on load if available
+    window.onload = () => {
+      fetch('stem-qa-data.json')
+        .then(res => {
+          if (!res.ok) throw new Error('No default config');
+          return res.json();
+        })
+        .then(data => {
+          if (!data || !Array.isArray(data.questions)) throw new Error('Invalid format');
+          document.getElementById('gameDescription').value = data.description || '';
+          document.getElementById('questionsContainer').innerHTML = '';
+          questionCount = 0;
+          data.questions.forEach(q => addQuestion(q));
+        })
+        .catch(() => {
+          // If not found or error, just add a blank question
+          addQuestion();
+        });
+    };
   </script>
 </body>
 </html>
