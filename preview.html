@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Menu Preview</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .menu-container {
+      background: #fff;
+      margin-top: 40px;
+      padding: 32px 24px;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      max-width: 400px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 24px;
+      color: #1976d2;
+      font-size: 2em;
+      text-align: center;
+    }
+    .menu-list {
+      list-style: none;
+      padding: 0;
+      width: 100%;
+    }
+    .menu-list li {
+      margin-bottom: 18px;
+      width: 100%;
+    }
+    .menu-link {
+      display: block;
+      width: 100%;
+      padding: 16px 0;
+      background: #1976d2;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 1.1em;
+      transition: background 0.2s;
+    }
+    .menu-link:hover {
+      background: #1565c0;
+    }
+    @media (max-width: 600px) {
+      .menu-container {
+        margin-top: 16px;
+        padding: 5vw 2vw;
+        max-width: 99vw;
+        border-radius: 8px;
+      }
+      h1 {
+        font-size: 1.3em;
+      }
+      .menu-link {
+        font-size: 1em;
+        padding: 12px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="menu-container">
+    <h1>App Menu</h1>
+    <ul class="menu-list">
+      <li>
+        <a class="menu-link" href="app/qa_mc/stem-qa-game.html">STEM Q&A Game</a>
+      </li>
+    </ul>
+  </div>
+</body>
+</html>
