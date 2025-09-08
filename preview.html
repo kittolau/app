@@ -41,6 +41,9 @@
     .menu-list li {
       margin-bottom: 18px;
       width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
     .menu-link {
       display: block;
@@ -56,6 +59,76 @@
     }
     .menu-link:hover {
       background: #1565c0;
+    }
+    .btn-group {
+      display: flex;
+      flex-direction: row;
+      gap: 6px;
+    }
+    .qr-btn {
+      background: #fff;
+      border: 1px solid #1976d2;
+      color: #1976d2;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+      font-size: 1.2em;
+      transition: background 0.2s, color 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .qr-btn svg {
+      width: 1.3em;
+      height: 1.3em;
+      display: block;
+    }
+    .qr-btn:hover {
+      background: #1976d2;
+      color: #fff;
+    }
+    /* Modal styles */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: auto;
+      background: rgba(0,0,0,0.3);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      background: #fff;
+      margin: auto;
+      padding: 24px 16px 16px 16px;
+      border-radius: 10px;
+      max-width: 320px;
+      width: 90vw;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.18);
+    }
+    .close {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      color: #888;
+      font-size: 1.5em;
+      font-weight: bold;
+      cursor: pointer;
+      background: none;
+      border: none;
+    }
+    .qrcode-label {
+      margin-top: 8px;
+      font-size: 0.95em;
+      color: #444;
+      text-align: center;
+      word-break: break-all;
     }
     @media (max-width: 600px) {
       .menu-container {
@@ -73,15 +146,67 @@
       }
     }
   </style>
+  <!-- QRCode.js library (MIT License) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 </head>
 <body>
   <div class="menu-container">
     <h1>App Menu</h1>
     <ul class="menu-list">
       <li>
-        <a class="menu-link" href="app/qa_mc/stem-qa-game.html">STEM Q&A Game</a>
+        <a class="menu-link" id="stemLink" href="app/qa_mc/stem-qa-game.html">STEM Q&A Game</a>
+        <div class="btn-group">
+          <button class="qr-btn" id="showQRBtn-stem" title="Show QR Code" aria-label="Show QR Code">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="7" height="7" rx="2"/>
+              <rect x="15" y="2" width="7" height="7" rx="2"/>
+              <rect x="2" y="15" width="7" height="7" rx="2"/>
+              <rect x="11" y="11" width="2" height="2" rx="1"/>
+              <rect x="15" y="15" width="1.5" height="1.5" rx="0.75"/>
+              <rect x="18" y="18" width="2" height="2" rx="1"/>
+              <rect x="15" y="19" width="1" height="1" rx="0.5"/>
+              <rect x="19" y="15" width="1" height="1" rx="0.5"/>
+            </svg>
+          </button>
+        </div>
       </li>
     </ul>
   </div>
+  <!-- Modal for QR code -->
+  <div id="qrModal-stem" class="modal">
+    <div class="modal-content">
+      <button class="close" id="closeQRModal-stem" title="Close">&times;</button>
+      <h3>STEM Q&A Game QR Code</h3>
+      <canvas id="qrcode-stem" width="128" height="128"></canvas>
+      <div class="qrcode-label" id="qrcode-label-stem"></div>
+    </div>
+  </div>
+  <script>
+    // Get the absolute URL for the STEM Q&A Game link
+    var stemLink = document.getElementById('stemLink');
+    var absStemUrl = new URL(stemLink.getAttribute('href'), window.location.href).href;
+    // Modal logic
+    var modal = document.getElementById('qrModal-stem');
+    var showBtn = document.getElementById('showQRBtn-stem');
+    var closeBtn = document.getElementById('closeQRModal-stem');
+    showBtn.onclick = function() {
+      modal.style.display = 'flex';
+      // Generate QR code when modal is shown
+      new QRious({
+        element: document.getElementById('qrcode-stem'),
+        value: absStemUrl,
+        size: 128
+      });
+      document.getElementById('qrcode-label-stem').textContent = absStemUrl;
+    };
+    closeBtn.onclick = function() {
+      modal.style.display = 'none';
+    };
+    window.onclick = function(event) {
+      if (event.target === modal) {
+        modal.style.display = 'none';
+      }
+    };
+  </script>
 </body>
 </html>
