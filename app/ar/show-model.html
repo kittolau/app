@@ -32,16 +32,12 @@
       font-size: 0.95em;
     }
   </style>
-  <!-- three.js -->
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/examples/js/controls/OrbitControls.js"></script>
-</head>
-<body>
-  <h1>GLTF 3D Model Preview</h1>
-  <div class="info">Model: <code>result.gltf</code> (with textures, if present)</div>
-  <div id="viewer"></div>
-  <script>
+  <!-- three.js as ES module -->
+  <script type="module">
+    import * as THREE from 'https://unpkg.com/three@0.153.0/build/three.module.js';
+    import { GLTFLoader } from 'https://unpkg.com/three@0.153.0/examples/jsm/loaders/GLTFLoader.js';
+    import { OrbitControls } from 'https://unpkg.com/three@0.153.0/examples/jsm/controls/OrbitControls.js';
+
     // Scene setup
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x222222);
@@ -62,12 +58,12 @@
     scene.add(dirLight);
 
     // Controls
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
+    const controls = new OrbitControls(camera, renderer.domElement);
     controls.target.set(0, 0.2, 0);
     controls.update();
 
     // Load GLTF
-    const loader = new THREE.GLTFLoader();
+    const loader = new GLTFLoader();
     loader.load('2d23d/result.gltf', function(gltf) {
       const model = gltf.scene;
       scene.add(model);
@@ -93,5 +89,10 @@
     }
     animate();
   </script>
+</head>
+<body>
+  <h1>GLTF 3D Model Preview</h1>
+  <div class="info">Model: <code>result.gltf</code> (with textures, if present)</div>
+  <div id="viewer"></div>
 </body>
 </html>
