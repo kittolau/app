@@ -154,7 +154,7 @@
     <h1>App Menu</h1>
     <ul class="menu-list">
       <li>
-        <a class="menu-link" id="stemLink" href="/app/app/qa_mc/stem-qa-game.html">STEM Q&A Game</a>
+        <a class="menu-link" id="stemLink" href="app/qa_mc/stem-qa-game.html">STEM Q&A Game</a>
         <div class="btn-group">
           <button class="qr-btn" id="showQRBtn-stem" title="Show QR Code" aria-label="Show QR Code">
             <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -171,7 +171,24 @@
         </div>
       </li>
       <li>
-        <a class="menu-link" id="flipcardLink" href="/app/app/flipcard/index.html">Card Flipping Memory Game</a>
+        <a class="menu-link" id="configGenLink" href="app/qa_mc/stem-qa-config-generator.html">STEM Q&A Config Generator</a>
+        <div class="btn-group">
+          <button class="qr-btn" id="showQRBtn-configGen" title="Show QR Code" aria-label="Show QR Code">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="7" height="7" rx="2"/>
+              <rect x="15" y="2" width="7" height="7" rx="2"/>
+              <rect x="2" y="15" width="7" height="7" rx="2"/>
+              <rect x="11" y="11" width="2" height="2" rx="1"/>
+              <rect x="15" y="15" width="1.5" height="1.5" rx="0.75"/>
+              <rect x="18" y="18" width="2" height="2" rx="1"/>
+              <rect x="15" y="19" width="1" height="1" rx="0.5"/>
+              <rect x="19" y="15" width="1" height="1" rx="0.5"/>
+            </svg>
+          </button>
+        </div>
+      </li>
+      <li>
+        <a class="menu-link" id="flipcardLink" href="app/flipcard/index.html">Card Flipping Memory Game</a>
         <div class="btn-group">
           <button class="qr-btn" id="showQRBtn-flipcard" title="Show QR Code" aria-label="Show QR Code">
             <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
@@ -227,6 +244,36 @@
       modalStem.style.display = 'none';
     };
 
+    // STEM Q&A Config Generator QR
+    var configGenLink = document.getElementById('configGenLink');
+    var absConfigGenUrl = new URL(configGenLink.getAttribute('href'), window.location.href).href;
+    var modalConfigGen = document.createElement('div');
+    modalConfigGen.id = 'qrModal-configGen';
+    modalConfigGen.className = 'modal';
+    modalConfigGen.innerHTML = `
+      <div class="modal-content">
+        <button class="close" id="closeQRModal-configGen" title="Close">&times;</button>
+        <h3>STEM Q&A Config Generator QR Code</h3>
+        <canvas id="qrcode-configGen" width="128" height="128"></canvas>
+        <div class="qrcode-label" id="qrcode-label-configGen"></div>
+      </div>
+    `;
+    document.body.appendChild(modalConfigGen);
+    var showBtnConfigGen = document.getElementById('showQRBtn-configGen');
+    var closeBtnConfigGen = document.getElementById('closeQRModal-configGen');
+    showBtnConfigGen.onclick = function() {
+      modalConfigGen.style.display = 'flex';
+      new QRious({
+        element: document.getElementById('qrcode-configGen'),
+        value: absConfigGenUrl,
+        size: 128
+      });
+      document.getElementById('qrcode-label-configGen').textContent = absConfigGenUrl;
+    };
+    closeBtnConfigGen.onclick = function() {
+      modalConfigGen.style.display = 'none';
+    };
+
     // Card Flipping Memory Game QR
     var flipcardLink = document.getElementById('flipcardLink');
     var absFlipcardUrl = new URL(flipcardLink.getAttribute('href'), window.location.href).href;
@@ -258,5 +305,3 @@
   </script>
 </body>
 </html>
-
-

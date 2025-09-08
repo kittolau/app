@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STEM Q&A Config Generator</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; padding: 0; }
+    .container { background: #fff; margin: 40px auto; padding: 24px 16px; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); max-width: 600px; }
+    h1 { text-align: center; color: #1976d2; }
+    label { display: block; margin-top: 16px; font-weight: bold; }
+    input[type="text"], textarea, input[type="number"] { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: 1px solid #ccc; font-size: 1em; }
+    .question-block { border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-top: 24px; background: #fafafa; position: relative; }
+    .remove-question { position: absolute; top: 8px; right: 8px; background: #f44336; color: #fff; border: none; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 0.9em; }
+    .answers-block { margin-top: 12px; }
+    .answer-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .answer-row input[type="text"] { flex: 1; }
+    .remove-answer { background: #e53935; color: #fff; border: none; border-radius: 4px; padding: 2px 8px; cursor: pointer; font-size: 0.9em; }
+    .add-answer { background: #1976d2; color: #fff; border: none; border-radius: 4px; padding: 4px 12px; cursor: pointer; margin-top: 6px; }
+    .add-question { background: #43a047; color: #fff; border: none; border-radius: 6px; padding: 10px 20px; cursor: pointer; margin: 24px 0 0 0; font-size: 1.1em; display: block; width: 100%; }
+    .export-btn { background: #ffa726; color: #fff; border: none; border-radius: 6px; padding: 12px 24px; cursor: pointer; margin: 32px auto 0 auto; display: block; font-size: 1.1em; }
+    .hint-label { font-weight: normal; font-size: 0.95em; color: #555; margin-left: 4px; }
+    .button-row {
+      display: flex;
+      gap: 12px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+      justify-content: stretch;
+    }
+    .add-question, .import-label {
+      flex: 1 1 180px;
+      min-width: 120px;
+      text-align: center;
+      margin: 0;
+    }
+    .import-label {
+      background: #1976d2;
+      color: #fff;
+      border-radius: 6px;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 1.1em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: none;
+      height: 44px;
+      box-sizing: border-box;
+      transition: background 0.2s;
+    }
+    .import-label:hover {
+      background: #125ea9;
+    }
+    @media (max-width: 700px) { .container { max-width: 99vw; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>STEM Q&A Config Generator</h1>
+    <label for="gameDescription">Game Description</label>
+    <textarea id="gameDescription" rows="2" placeholder="Enter game description..."></textarea>
+    <div id="questionsContainer"></div>
+    <div class="button-row">
+      <button class="add-question" onclick="addQuestion()">+ Add Question</button>
+      <label class="import-label" for="importJsonInput">
+        <input type="file" id="importJsonInput" accept="application/json" style="display:none;">
+        Import JSON
+      </label>
+    </div>
+    <button class="export-btn" onclick="exportJSON()">Export as JSON</button>
+  </div>
+  <script>
+    let questionCount = 0;
+    function addQuestion(qData) {
+      const qIdx = questionCount++;
+      const container = document.getElementById('questionsContainer');
+      const qBlock = document.createElement('div');
+      qBlock.className = 'question-block';
+      qBlock.id = `question-block-${qIdx}`;
+      qBlock.innerHTML = `
+        <button class="remove-question" onclick="removeQuestion(${qIdx})">Remove</button>
+        <label>Question</label>
+        <input type="text" class="q-text" placeholder="Enter question text...">
+        <label>Score</label>
+        <input type="number" class="q-score" min="0" value="10">
+        <div class="answers-block" id="answers-block-${qIdx}"></div>
+        <button class="add-answer" type="button" onclick="addAnswer(${qIdx})">+ Add Answer</button>
+      `;
+      container.appendChild(qBlock);
+      // Add 4 answers by default
+      for (let i = 0; i < (qData?.answers?.length || 4); i++) {
+        addAnswer(qIdx, qData?.answers?.[i], qData?.correct === i, qData?.hints?.[i]);
+      }
+      // Fill data if provided
+      if (qData) {
+        qBlock.querySelector('.q-text').value = qData.question || '';
+        qBlock.querySelector('.q-score').value = qData.score || 10;
+      }
+    }
+    function removeQuestion(idx) {
+      const qBlock = document.getElementById(`question-block-${idx}`);
+      if (qBlock) qBlock.remove();
+    }
+    function addAnswer(qIdx, answerText = '', isCorrect = false, hint = '') {
+      const answersBlock = document.getElementById(`answers-block-${qIdx}`);
+      const aIdx = answersBlock.childElementCount;
+      const row = document.createElement('div');
+      row.className = 'answer-row';
+      row.innerHTML = `
+        <input type="radio" name="correct-${qIdx}" ${isCorrect ? 'checked' : ''} title="Mark as correct">
+        <input type="text" class="a-text" placeholder="Answer text..." value="${answerText.replace(/"/g, '&quot;')}">
+        <input type="text" class="a-hint" placeholder="Hint for this answer..." value="${hint ? hint.replace(/"/g, '&quot;') : ''}">
+        <span class="hint-label">Hint</span>
+        <button class="remove-answer" type="button" onclick="this.parentNode.remove()">Remove</button>
+      `;
+      answersBlock.appendChild(row);
+    }
+    function exportJSON() {
+      const description = document.getElementById('gameDescription').value.trim();
+      const questions = [];
+      const qBlocks = document.querySelectorAll('.question-block');
+      for (const qBlock of qBlocks) {
+        const qText = qBlock.querySelector('.q-text').value.trim();
+        const qScore = parseInt(qBlock.querySelector('.q-score').value) || 0;
+        const answers = [];
+        const hints = [];
+        let correct = -1;
+        const answerRows = qBlock.querySelectorAll('.answer-row');
+        answerRows.forEach((row, idx) => {
+          const aText = row.querySelector('.a-text').value.trim();
+          const aHint = row.querySelector('.a-hint').value.trim();
+          answers.push(aText);
+          hints.push(aHint);
+          if (row.querySelector('input[type="radio"]').checked) correct = idx;
+        });
+        if (!qText || answers.length < 2 || correct === -1) {
+          alert('Each question must have text, at least 2 answers, and a correct answer selected.');
+          return;
+        }
+        questions.push({ question: qText, answers, correct, score: qScore, hints });
+      }
+      const config = { description, questions };
+      const blob = new Blob([JSON.stringify(config, null, 2)], {type: 'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'stem-qa-data.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+    // Import JSON functionality
+    document.getElementById('importJsonInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = JSON.parse(evt.target.result);
+          if (!data || !Array.isArray(data.questions)) throw new Error('Invalid format');
+          // Set description
+          document.getElementById('gameDescription').value = data.description || '';
+          // Remove all existing questions
+          document.getElementById('questionsContainer').innerHTML = '';
+          questionCount = 0;
+          // Add questions from JSON
+          data.questions.forEach(q => addQuestion(q));
+        } catch (err) {
+          alert('Failed to import JSON: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+      // Reset input so same file can be re-imported if needed
+      e.target.value = '';
+    });
+
+    // Add one question by default
+    window.onload = () => { addQuestion(); };
+  </script>
+</body>
+</html>
