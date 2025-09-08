@@ -132,6 +132,8 @@
 <body>
   <div class="container">
   <div class="description" id="description"></div>
+  <div id="result" style="display:none;"></div>
+  <canvas id="confetti-canvas" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1000;pointer-events:none;"></canvas>
   <div class="question" id="question"></div>
   <div class="score" id="score" style="text-align:center; color:#1976d2; font-weight:bold; margin-bottom:10px;"></div>
   <div class="answers" id="answers"></div>
@@ -150,14 +152,15 @@
   let startTime = 0;
   let finishedTime = 0;
 
-    const descriptionEl = document.getElementById('description');
-    const questionEl = document.getElementById('question');
+  const descriptionEl = document.getElementById('description');
+  const resultEl = document.getElementById('result');
+  const questionEl = document.getElementById('question');
   const answersEl = document.getElementById('answers');
   const scoreEl = document.getElementById('score');
-    const nextBtn = document.getElementById('nextBtn');
-    const restartBtn = document.getElementById('restartBtn');
-    const hintEl = document.getElementById('hint');
-    const retryBtn = document.getElementById('retryBtn');
+  const nextBtn = document.getElementById('nextBtn');
+  const restartBtn = document.getElementById('restartBtn');
+  const hintEl = document.getElementById('hint');
+  const retryBtn = document.getElementById('retryBtn');
 
     fetch('stem-qa-data.json')
       .then(response => response.json())
@@ -174,6 +177,10 @@
       restartBtn.style.display = 'none';
       hintEl.style.display = 'none';
       retryBtn.style.display = 'none';
+      resultEl.style.display = 'none';
+      questionEl.style.display = '';
+      scoreEl.style.display = '';
+      answersEl.style.display = '';
       const q = questions[currentQuestion];
       questionEl.textContent = q.question;
       scoreEl.textContent = `Score for this question: ${q.score ?? 0}`;
@@ -208,7 +215,7 @@
         } else {
           finishedTime = Math.floor((Date.now() - startTime) / 1000);
           setTimeout(() => {
-            showEndPrompt();
+            showResultStat();
           }, 400);
         }
       } else {
@@ -244,14 +251,88 @@
       totalScore = 0;
       finishedTime = 0;
       startTime = Date.now();
+      resultEl.style.display = 'none';
       showQuestion();
     }
 
-    function showEndPrompt() {
-      setTimeout(() => {
-        alert(`🎉 Congratulations!\nTotal Score: ${totalScore}\nRetries: ${retries}\nTime: ${finishedTime}s`);
-        resetGame();
-      }, 100);
+    function showResultStat() {
+      // Hide question UI
+      questionEl.style.display = 'none';
+      scoreEl.style.display = 'none';
+      answersEl.style.display = 'none';
+      hintEl.style.display = 'none';
+      nextBtn.style.display = 'none';
+      retryBtn.style.display = 'none';
+      // Show result
+      resultEl.innerHTML = `
+        <div style="text-align:center; padding: 24px 0 18px 0; max-width: 350px; margin: 0 auto;">
+          <div style="font-size:2.2em; margin-bottom:10px; color:#43a047; font-weight:bold; letter-spacing:1px;">
+            <span style="vertical-align:middle;">�</span> You Win!
+          </div>
+          <div style="background:linear-gradient(90deg,#e3f2fd,#fff,#e8f5e9);border-radius:12px;padding:18px 10px 10px 10px;box-shadow:0 2px 12px rgba(33,150,243,0.08);margin-bottom:18px;">
+            <div style="font-size:1.25em; color:#1976d2; margin-bottom:8px;">Total Score: <b>${totalScore}</b></div>
+            <div style="font-size:1.1em; color:#f57c00; margin-bottom:8px;">Retries: <b>${retries}</b></div>
+            <div style="font-size:1.1em; color:#388e3c; margin-bottom:8px;">Time: <b>${finishedTime}s</b></div>
+          </div>
+          <button class="restart-btn" onclick="resetGame()" style="margin-top:10px;">Restart Game</button>
+        </div>
+      `;
+      resultEl.style.display = '';
+      restartBtn.style.display = 'none';
+      launchConfetti();
+    }
+
+    // Confetti effect
+    function launchConfetti() {
+      const canvas = document.getElementById('confetti-canvas');
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      canvas.style.display = 'block';
+      const ctx = canvas.getContext('2d');
+      const confettiCount = 120;
+      const confetti = [];
+      const colors = ['#1976d2','#43a047','#fbc02d','#e53935','#8e24aa','#f57c00','#00bcd4','#cddc39'];
+      for (let i = 0; i < confettiCount; i++) {
+        confetti.push({
+          x: Math.random() * canvas.width,
+          y: Math.random() * -canvas.height,
+          r: 6 + Math.random() * 8,
+          d: 2 + Math.random() * 2,
+          color: colors[Math.floor(Math.random()*colors.length)],
+          tilt: Math.random() * 10 - 10,
+          tiltAngle: 0,
+          tiltAngleIncremental: (Math.random() * 0.07) + 0.05
+        });
+      }
+      let angle = 0;
+      let frame = 0;
+      function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        angle += 0.01;
+        for (let i = 0; i < confetti.length; i++) {
+          let c = confetti[i];
+          c.tiltAngle += c.tiltAngleIncremental;
+          c.y += (Math.cos(angle + c.d) + 1 + c.d/2);
+          c.x += Math.sin(angle);
+          c.tilt = Math.sin(c.tiltAngle) * 15;
+          ctx.beginPath();
+          ctx.lineWidth = c.r;
+          ctx.strokeStyle = c.color;
+          ctx.moveTo(c.x + c.tilt + c.r/3, c.y);
+          ctx.lineTo(c.x + c.tilt, c.y + c.tilt + 10);
+          ctx.stroke();
+        }
+      }
+      function animate() {
+        draw();
+        frame++;
+        if (frame < 120) {
+          requestAnimationFrame(animate);
+        } else {
+          canvas.style.display = 'none';
+        }
+      }
+      animate();
     }
   </script>
 </body>
