@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>STEM Q&A Game</title>
+    <style>
+    html {
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    .container {
+      background: #fff;
+      margin-top: 40px;
+      padding: 6vw 4vw;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      max-width: 420px;
+      width: 95vw;
+      min-width: 0;
+    }
+    .description {
+      font-size: 1.1em;
+      margin-bottom: 24px;
+      color: #333;
+      text-align: center;
+    }
+    .question {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+      color: #222;
+      text-align: center;
+    }
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .answer-btn {
+      padding: 14px 8px;
+      border: none;
+      border-radius: 6px;
+      background: #e0e0e0;
+      color: #222;
+      font-size: 1.05em;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+      width: 100%;
+      max-width: 100%;
+      word-break: break-word;
+    }
+    .answer-btn.correct {
+      background: #4caf50;
+      color: #fff;
+    }
+    .answer-btn.wrong {
+      background: #f44336;
+      color: #fff;
+    }
+    .next-btn, .restart-btn, .retry-btn {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      background: #1976d2;
+      color: #fff;
+      font-size: 1em;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background 0.2s;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 0.5em;
+    }
+    .retry-btn {
+      background: #ffa726;
+      color: #fff;
+    }
+    .next-btn:disabled {
+      background: #90caf9;
+      cursor: not-allowed;
+    }
+    .hint {
+      font-size: 1em;
+      text-align: center;
+      margin-bottom: 10px;
+      padding: 0 4px;
+      word-break: break-word;
+    }
+    @media (max-width: 600px) {
+      html {
+        font-size: 15px;
+      }
+      .container {
+        margin-top: 16px;
+        padding: 5vw 2vw;
+        max-width: 99vw;
+        border-radius: 8px;
+      }
+      .answer-btn, .next-btn, .restart-btn, .retry-btn {
+        font-size: 1em;
+        padding: 12px 6px;
+      }
+      .description, .question, .hint {
+        font-size: 1em;
+      }
+    }
+    @media (max-width: 400px) {
+      html {
+        font-size: 13px;
+      }
+      .container {
+        padding: 2vw 1vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+  <div class="description" id="description"></div>
+  <div class="question" id="question"></div>
+  <div class="score" id="score" style="text-align:center; color:#1976d2; font-weight:bold; margin-bottom:10px;"></div>
+  <div class="answers" id="answers"></div>
+  <div class="hint" id="hint" style="display:none; color:#d84315; margin-bottom:10px;"></div>
+  <button class="retry-btn" id="retryBtn" style="display:none; background:#ffa726; color:#fff;">Retry</button>
+  <button class="next-btn" id="nextBtn" style="display:none;">Next Question</button>
+  <button class="restart-btn" id="restartBtn" style="display:none;">Restart Game</button>
+  </div>
+  <script>
+    let questions = [];
+    let description = '';
+  let currentQuestion = 0;
+  let answered = false;
+  let retries = 0;
+  let totalScore = 0;
+  let startTime = 0;
+  let finishedTime = 0;
+
+    const descriptionEl = document.getElementById('description');
+    const questionEl = document.getElementById('question');
+  const answersEl = document.getElementById('answers');
+  const scoreEl = document.getElementById('score');
+    const nextBtn = document.getElementById('nextBtn');
+    const restartBtn = document.getElementById('restartBtn');
+    const hintEl = document.getElementById('hint');
+    const retryBtn = document.getElementById('retryBtn');
+
+    fetch('stem-qa-data.json')
+      .then(response => response.json())
+      .then(data => {
+        questions = data.questions;
+        description = data.description;
+        descriptionEl.textContent = description;
+        resetGame();
+      });
+
+    function showQuestion() {
+      answered = false;
+      nextBtn.style.display = 'none';
+      restartBtn.style.display = 'none';
+      hintEl.style.display = 'none';
+      retryBtn.style.display = 'none';
+      const q = questions[currentQuestion];
+      questionEl.textContent = q.question;
+      scoreEl.textContent = `Score for this question: ${q.score ?? 0}`;
+      answersEl.innerHTML = '';
+      q.answers.forEach((ans, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'answer-btn';
+        btn.textContent = ans;
+        btn.onclick = () => selectAnswer(idx, btn);
+        answersEl.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(idx, btn) {
+      if (answered) return;
+      answered = true;
+      const q = questions[currentQuestion];
+      const btns = answersEl.querySelectorAll('button');
+      if (idx === q.correct) {
+        btns.forEach((b, i) => {
+          if (i === q.correct) {
+            b.classList.add('correct');
+          }
+          b.disabled = true;
+        });
+        hintEl.textContent = (q.hints && q.hints[idx]) ? q.hints[idx] : '';
+        hintEl.style.display = q.hints && q.hints[idx] ? 'block' : 'none';
+        retryBtn.style.display = 'none';
+        totalScore += q.score ?? 0;
+        if (currentQuestion < questions.length - 1) {
+          nextBtn.style.display = 'inline-block';
+        } else {
+          finishedTime = Math.floor((Date.now() - startTime) / 1000);
+          setTimeout(() => {
+            showEndPrompt();
+          }, 400);
+        }
+      } else {
+        btns.forEach((b, i) => {
+          if (i === idx) {
+            b.classList.add('wrong');
+          }
+          b.disabled = true;
+        });
+        hintEl.textContent = (q.hints && q.hints[idx]) ? q.hints[idx] : 'Try again!';
+        hintEl.style.display = 'block';
+        retryBtn.style.display = 'inline-block';
+        retries++;
+      }
+    }
+
+    retryBtn.onclick = () => {
+      showQuestion();
+    };
+
+    nextBtn.onclick = () => {
+      currentQuestion++;
+      showQuestion();
+    };
+
+    restartBtn.onclick = () => {
+      resetGame();
+    };
+
+    function resetGame() {
+      currentQuestion = 0;
+      retries = 0;
+      totalScore = 0;
+      finishedTime = 0;
+      startTime = Date.now();
+      showQuestion();
+    }
+
+    function showEndPrompt() {
+      setTimeout(() => {
+        alert(`🎉 Congratulations!\nTotal Score: ${totalScore}\nRetries: ${retries}\nTime: ${finishedTime}s`);
+        resetGame();
+      }, 100);
+    }
+  </script>
+</body>
+</html>
