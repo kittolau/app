@@ -188,23 +188,6 @@
         </div>
       </li>
       <li>
-        <a class="menu-link" id="arSimpleLink" href="app/ar/ar-simple.html">AR Marker Demo</a>
-        <div class="btn-group">
-          <button class="qr-btn" id="showQRBtn-arSimple" title="Show QR Code" aria-label="Show QR Code">
-            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <rect x="2" y="2" width="7" height="7" rx="2"/>
-              <rect x="15" y="2" width="7" height="7" rx="2"/>
-              <rect x="2" y="15" width="7" height="7" rx="2"/>
-              <rect x="11" y="11" width="2" height="2" rx="1"/>
-              <rect x="15" y="15" width="1.5" height="1.5" rx="0.75"/>
-              <rect x="18" y="18" width="2" height="2" rx="1"/>
-              <rect x="15" y="19" width="1" height="1" rx="0.5"/>
-              <rect x="19" y="15" width="1" height="1" rx="0.5"/>
-            </svg>
-          </button>
-        </div>
-      </li>
-      <li>
         <a class="menu-link" id="flipcardLink" href="app/flipcard/index.html">Card Flipping Memory Game</a>
         <div class="btn-group">
           <button class="qr-btn" id="showQRBtn-flipcard" title="Show QR Code" aria-label="Show QR Code">
@@ -221,33 +204,40 @@
           </button>
         </div>
       </li>
-  <!-- Modal for QR code: AR Marker Demo -->
-  <div id="qrModal-arSimple" class="modal">
-    <div class="modal-content">
-      <button class="close" id="closeQRModal-arSimple" title="Close">&times;</button>
-      <h3>AR Marker Demo QR Code</h3>
-      <canvas id="qrcode-arSimple" width="128" height="128"></canvas>
-      <div class="qrcode-label" id="qrcode-label-arSimple"></div>
-    </div>
-  </div>
-    // AR Marker Demo QR
-    var arSimpleLink = document.getElementById('arSimpleLink');
-    var absArSimpleUrl = new URL(arSimpleLink.getAttribute('href'), window.location.href).href;
-    var modalArSimple = document.getElementById('qrModal-arSimple');
-    var showBtnArSimple = document.getElementById('showQRBtn-arSimple');
-    var closeBtnArSimple = document.getElementById('closeQRModal-arSimple');
-    showBtnArSimple.onclick = function() {
-      modalArSimple.style.display = 'flex';
-      new QRious({
-        element: document.getElementById('qrcode-arSimple'),
-        value: absArSimpleUrl,
-        size: 128
-      });
-      document.getElementById('qrcode-label-arSimple').textContent = absArSimpleUrl;
-    };
-    closeBtnArSimple.onclick = function() {
-      modalArSimple.style.display = 'none';
-    };
+      <li>
+        <a class="menu-link" id="arSimpleLink" href="app/ar/ar-simple.html">AR Simple Demo</a>
+        <div class="btn-group">
+          <button class="qr-btn" id="showQRBtn-arSimple" title="Show QR Code" aria-label="Show QR Code">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="7" height="7" rx="2"/>
+              <rect x="15" y="2" width="7" height="7" rx="2"/>
+              <rect x="2" y="15" width="7" height="7" rx="2"/>
+              <rect x="11" y="11" width="2" height="2" rx="1"/>
+              <rect x="15" y="15" width="1.5" height="1.5" rx="0.75"/>
+              <rect x="18" y="18" width="2" height="2" rx="1"/>
+              <rect x="15" y="19" width="1" height="1" rx="0.5"/>
+              <rect x="19" y="15" width="1" height="1" rx="0.5"/>
+            </svg>
+          </button>
+        </div>
+      </li>
+      <li>
+        <a class="menu-link" id="showModelLink" href="app/ar/show-model.html">GLTF 3D Model Viewer</a>
+        <div class="btn-group">
+          <button class="qr-btn" id="showQRBtn-showModel" title="Show QR Code" aria-label="Show QR Code">
+            <svg viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <rect x="2" y="2" width="7" height="7" rx="2"/>
+              <rect x="15" y="2" width="7" height="7" rx="2"/>
+              <rect x="2" y="15" width="7" height="7" rx="2"/>
+              <rect x="11" y="11" width="2" height="2" rx="1"/>
+              <rect x="15" y="15" width="1.5" height="1.5" rx="0.75"/>
+              <rect x="18" y="18" width="2" height="2" rx="1"/>
+              <rect x="15" y="19" width="1" height="1" rx="0.5"/>
+              <rect x="19" y="15" width="1" height="1" rx="0.5"/>
+            </svg>
+          </button>
+        </div>
+      </li>
     </ul>
   </div>
   <!-- Modal for QR code: STEM Q&A Game -->
@@ -266,6 +256,24 @@
       <h3>Card Flipping Memory Game QR Code</h3>
       <canvas id="qrcode-flipcard" width="128" height="128"></canvas>
       <div class="qrcode-label" id="qrcode-label-flipcard"></div>
+    </div>
+  </div>
+  <!-- Modal for QR code: AR Simple Demo -->
+  <div id="qrModal-arSimple" class="modal">
+    <div class="modal-content">
+      <button class="close" id="closeQRModal-arSimple" title="Close">&times;</button>
+      <h3>AR Simple Demo QR Code</h3>
+      <canvas id="qrcode-arSimple" width="128" height="128"></canvas>
+      <div class="qrcode-label" id="qrcode-label-arSimple"></div>
+    </div>
+  </div>
+  <!-- Modal for QR code: GLTF 3D Model Viewer -->
+  <div id="qrModal-showModel" class="modal">
+    <div class="modal-content">
+      <button class="close" id="closeQRModal-showModel" title="Close">&times;</button>
+      <h3>GLTF 3D Model Viewer QR Code</h3>
+      <canvas id="qrcode-showModel" width="128" height="128"></canvas>
+      <div class="qrcode-label" id="qrcode-label-showModel"></div>
     </div>
   </div>
   <script>
@@ -337,16 +345,57 @@
       modalFlipcard.style.display = 'none';
     };
 
+    // AR Simple Demo QR
+    var arSimpleLink = document.getElementById('arSimpleLink');
+    var absArSimpleUrl = new URL(arSimpleLink.getAttribute('href'), window.location.href).href;
+    var modalArSimple = document.getElementById('qrModal-arSimple');
+    var showBtnArSimple = document.getElementById('showQRBtn-arSimple');
+    var closeBtnArSimple = document.getElementById('closeQRModal-arSimple');
+    showBtnArSimple.onclick = function() {
+      modalArSimple.style.display = 'flex';
+      new QRious({
+        element: document.getElementById('qrcode-arSimple'),
+        value: absArSimpleUrl,
+        size: 128
+      });
+      document.getElementById('qrcode-label-arSimple').textContent = absArSimpleUrl;
+    };
+    closeBtnArSimple.onclick = function() {
+      modalArSimple.style.display = 'none';
+    };
+
+    // GLTF 3D Model Viewer QR
+    var showModelLink = document.getElementById('showModelLink');
+    var absShowModelUrl = new URL(showModelLink.getAttribute('href'), window.location.href).href;
+    var modalShowModel = document.getElementById('qrModal-showModel');
+    var showBtnShowModel = document.getElementById('showQRBtn-showModel');
+    var closeBtnShowModel = document.getElementById('closeQRModal-showModel');
+    showBtnShowModel.onclick = function() {
+      modalShowModel.style.display = 'flex';
+      new QRious({
+        element: document.getElementById('qrcode-showModel'),
+        value: absShowModelUrl,
+        size: 128
+      });
+      document.getElementById('qrcode-label-showModel').textContent = absShowModelUrl;
+    };
+    closeBtnShowModel.onclick = function() {
+      modalShowModel.style.display = 'none';
+    };
+
     // Close modals on outside click
     window.onclick = function(event) {
       if (event.target === modalStem) {
         modalStem.style.display = 'none';
       }
+      if (event.target === modalFlipcard) {
+        modalFlipcard.style.display = 'none';
+      }
       if (event.target === modalArSimple) {
         modalArSimple.style.display = 'none';
       }
-      if (event.target === modalFlipcard) {
-        modalFlipcard.style.display = 'none';
+      if (event.target === modalShowModel) {
+        modalShowModel.style.display = 'none';
       }
     };
   </script>

@@ -1,0 +1,193 @@
+{
+    "asset": {
+        "version": "2.0",
+        "generator": "Open Asset Import Library (assimp v5.2.cf7d3637)"
+    },
+    "extensionsUsed": [
+        "KHR_materials_volume",
+        "KHR_materials_ior",
+        "FB_ngon_encoding"
+    ],
+    "accessors": [
+        {
+            "bufferView": 0,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 1425462,
+            "type": "VEC3",
+            "max": [
+                0.20277400314807893,
+                0.5,
+                0.18994100391864777
+            ],
+            "min": [
+                -0.20277400314807893,
+                -0.5,
+                -0.18992599844932557
+            ]
+        },
+        {
+            "bufferView": 1,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 1425462,
+            "type": "VEC3",
+            "max": [
+                1.0,
+                1.0,
+                1.0
+            ],
+            "min": [
+                -1.0,
+                -1.0,
+                -1.0
+            ]
+        },
+        {
+            "bufferView": 2,
+            "byteOffset": 0,
+            "componentType": 5126,
+            "count": 1425462,
+            "type": "VEC2",
+            "max": [
+                0.9997559785842896,
+                0.9997559785842896
+            ],
+            "min": [
+                0.0,
+                0.002929985523223877
+            ]
+        },
+        {
+            "bufferView": 3,
+            "byteOffset": 0,
+            "componentType": 5125,
+            "count": 1425462,
+            "type": "SCALAR",
+            "max": [
+                1425461
+            ],
+            "min": [
+                0
+            ]
+        }
+    ],
+    "buffers": [
+        {
+            "byteLength": 51316632,
+            "uri": "result.bin"
+        }
+    ],
+    "bufferViews": [
+        {
+            "buffer": 0,
+            "byteOffset": 0,
+            "byteLength": 17105544,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 17105544,
+            "byteLength": 17105544,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 34211088,
+            "byteLength": 11403696,
+            "target": 34962
+        },
+        {
+            "buffer": 0,
+            "byteOffset": 45614784,
+            "byteLength": 5701848,
+            "target": 34963
+        }
+    ],
+    "images": [
+        {
+            "uri": "tripo_image_d555029c-228d-470a-93fd-cdd83271694d_0.jpg"
+        }
+    ],
+    "materials": [
+        {
+            "name": "DefaultMaterial",
+            "pbrMetallicRoughness": {
+                "baseColorFactor": [
+                    0.6000000238418579,
+                    0.6000000238418579,
+                    0.6000000238418579,
+                    1.0
+                ],
+                "metallicFactor": 0.0
+            },
+            "extensions": {
+                "KHR_materials_ior": {
+                    "ior": 1.0
+                }
+            }
+        },
+        {
+            "name": "tripo_mat_d555029c-228d-470a-93fd-cdd83271694d",
+            "pbrMetallicRoughness": {
+                "baseColorTexture": {
+                    "index": 0
+                },
+                "baseColorFactor": [
+                    0.6000000238418579,
+                    0.6000000238418579,
+                    0.6000000238418579,
+                    1.0
+                ],
+                "metallicFactor": 0.0,
+                "roughnessFactor": 0.9518010020256043
+            }
+        }
+    ],
+    "meshes": [
+        {
+            "name": "tripo_node_d555029c-228d-470a-93fd-cdd83271694d",
+            "primitives": [
+                {
+                    "mode": 4,
+                    "material": 1,
+                    "indices": 3,
+                    "attributes": {
+                        "POSITION": 0,
+                        "NORMAL": 1,
+                        "TEXCOORD_0": 2
+                    }
+                }
+            ]
+        }
+    ],
+    "nodes": [
+        {
+            "name": "tripo_convert_d555029c-228d-470a-93fd-cdd83271694d.obj",
+            "children": [
+                1
+            ]
+        },
+        {
+            "name": "tripo_node_d555029c-228d-470a-93fd-cdd83271694d",
+            "mesh": 0
+        }
+    ],
+    "samplers": [
+        {}
+    ],
+    "scenes": [
+        {
+            "nodes": [
+                0
+            ]
+        }
+    ],
+    "textures": [
+        {
+            "source": 0,
+            "sampler": 0
+        }
+    ],
+    "scene": 0
+}
