@@ -5,6 +5,7 @@
       "question": "What is the chemical symbol for water?",
       "answers": ["H2O", "O2", "CO2", "NaCl"],
       "correct": 0,
+      "score": 10,
       "hints": [
         "Correct! H2O is water.",
         "O2 is oxygen, not water.",
@@ -16,6 +17,7 @@
       "question": "Which planet is known as the Red Planet?",
       "answers": ["Venus", "Mars", "Jupiter", "Saturn"],
       "correct": 1,
+      "score": 10,
       "hints": [
         "Venus is called Earth's sister planet, not the Red Planet.",
         "Correct! Mars is the Red Planet.",
@@ -27,6 +29,7 @@
       "question": "What is 9 x 7?",
       "answers": ["56", "63", "72", "49"],
       "correct": 1,
+      "score": 10,
       "hints": [
         "56 is 7 x 8, not 9 x 7.",
         "Correct! 9 x 7 = 63.",
@@ -38,6 +41,7 @@
       "question": "Which device is used to measure temperature?",
       "answers": ["Barometer", "Thermometer", "Hygrometer", "Altimeter"],
       "correct": 1,
+      "score": 10,
       "hints": [
         "Barometer measures air pressure, not temperature.",
         "Correct! Thermometer measures temperature.",
@@ -49,6 +53,7 @@
       "question": "What is the main function of roots in plants?",
       "answers": ["Photosynthesis", "Absorb water", "Produce seeds", "Attract pollinators"],
       "correct": 1,
+      "score": 10,
       "hints": [
         "Photosynthesis happens in leaves, not roots.",
         "Correct! Roots absorb water.",

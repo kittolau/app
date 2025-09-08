@@ -133,6 +133,7 @@
   <div class="container">
   <div class="description" id="description"></div>
   <div class="question" id="question"></div>
+  <div class="score" id="score" style="text-align:center; color:#1976d2; font-weight:bold; margin-bottom:10px;"></div>
   <div class="answers" id="answers"></div>
   <div class="hint" id="hint" style="display:none; color:#d84315; margin-bottom:10px;"></div>
   <button class="retry-btn" id="retryBtn" style="display:none; background:#ffa726; color:#fff;">Retry</button>
@@ -142,12 +143,17 @@
   <script>
     let questions = [];
     let description = '';
-    let currentQuestion = 0;
-    let answered = false;
+  let currentQuestion = 0;
+  let answered = false;
+  let retries = 0;
+  let totalScore = 0;
+  let startTime = 0;
+  let finishedTime = 0;
 
     const descriptionEl = document.getElementById('description');
     const questionEl = document.getElementById('question');
-    const answersEl = document.getElementById('answers');
+  const answersEl = document.getElementById('answers');
+  const scoreEl = document.getElementById('score');
     const nextBtn = document.getElementById('nextBtn');
     const restartBtn = document.getElementById('restartBtn');
     const hintEl = document.getElementById('hint');
@@ -159,7 +165,7 @@
         questions = data.questions;
         description = data.description;
         descriptionEl.textContent = description;
-        showQuestion();
+        resetGame();
       });
 
     function showQuestion() {
@@ -170,6 +176,7 @@
       retryBtn.style.display = 'none';
       const q = questions[currentQuestion];
       questionEl.textContent = q.question;
+      scoreEl.textContent = `Score for this question: ${q.score ?? 0}`;
       answersEl.innerHTML = '';
       q.answers.forEach((ans, idx) => {
         const btn = document.createElement('button');
@@ -195,11 +202,14 @@
         hintEl.textContent = (q.hints && q.hints[idx]) ? q.hints[idx] : '';
         hintEl.style.display = q.hints && q.hints[idx] ? 'block' : 'none';
         retryBtn.style.display = 'none';
+        totalScore += q.score ?? 0;
         if (currentQuestion < questions.length - 1) {
           nextBtn.style.display = 'inline-block';
         } else {
-          restartBtn.style.display = 'inline-block';
-          questionEl.textContent = 'Congratulations! You finished the game.';
+          finishedTime = Math.floor((Date.now() - startTime) / 1000);
+          setTimeout(() => {
+            showEndPrompt();
+          }, 400);
         }
       } else {
         btns.forEach((b, i) => {
@@ -211,6 +221,7 @@
         hintEl.textContent = (q.hints && q.hints[idx]) ? q.hints[idx] : 'Try again!';
         hintEl.style.display = 'block';
         retryBtn.style.display = 'inline-block';
+        retries++;
       }
     }
 
@@ -224,9 +235,24 @@
     };
 
     restartBtn.onclick = () => {
-      currentQuestion = 0;
-      showQuestion();
+      resetGame();
     };
+
+    function resetGame() {
+      currentQuestion = 0;
+      retries = 0;
+      totalScore = 0;
+      finishedTime = 0;
+      startTime = Date.now();
+      showQuestion();
+    }
+
+    function showEndPrompt() {
+      setTimeout(() => {
+        alert(`🎉 Congratulations!\nTotal Score: ${totalScore}\nRetries: ${retries}\nTime: ${finishedTime}s`);
+        resetGame();
+      }, 100);
+    }
   </script>
 </body>
 </html>
