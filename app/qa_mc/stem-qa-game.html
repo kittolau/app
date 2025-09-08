@@ -131,27 +131,30 @@
 </head>
 <body>
   <div class="container">
-  <div class="description" id="description"></div>
-  <div id="result" style="display:none;"></div>
-  <canvas id="confetti-canvas" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1000;pointer-events:none;"></canvas>
-  <div class="question" id="question"></div>
-  <div class="score" id="score" style="text-align:center; color:#1976d2; font-weight:bold; margin-bottom:10px;"></div>
-  <div class="answers" id="answers"></div>
-  <div class="hint" id="hint" style="display:none; color:#d84315; margin-bottom:10px;"></div>
-  <button class="retry-btn" id="retryBtn" style="display:none; background:#ffa726; color:#fff;">Retry</button>
-  <button class="next-btn" id="nextBtn" style="display:none;">Next Question</button>
-  <button class="restart-btn" id="restartBtn" style="display:none;">Restart Game</button>
+    <div id="startScreen" style="display:none;"></div>
+    <div class="description" id="description"></div>
+    <div id="result" style="display:none;"></div>
+    <canvas id="confetti-canvas" style="display:none;position:fixed;top:0;left:0;width:100vw;height:100vh;z-index:1000;pointer-events:none;"></canvas>
+    <div class="question" id="question"></div>
+    <div class="score" id="score" style="text-align:center; color:#1976d2; font-weight:bold; margin-bottom:10px;"></div>
+    <div class="answers" id="answers"></div>
+    <div class="hint" id="hint" style="display:none; color:#d84315; margin-bottom:10px;"></div>
+    <button class="retry-btn" id="retryBtn" style="display:none; background:#ffa726; color:#fff;">Retry</button>
+    <button class="next-btn" id="nextBtn" style="display:none;">Next Question</button>
+    <button class="restart-btn" id="restartBtn" style="display:none;">Restart Game</button>
   </div>
   <script>
     let questions = [];
     let description = '';
-  let currentQuestion = 0;
-  let answered = false;
-  let retries = 0;
-  let totalScore = 0;
-  let startTime = 0;
-  let finishedTime = 0;
+    let currentQuestion = 0;
+    let answered = false;
+    let retries = 0;
+    let totalScore = 0;
+    let startTime = 0;
+    let finishedTime = 0;
+    let gameStarted = false;
 
+  const startScreenEl = document.getElementById('startScreen');
   const descriptionEl = document.getElementById('description');
   const resultEl = document.getElementById('result');
   const questionEl = document.getElementById('question');
@@ -168,10 +171,40 @@
         questions = data.questions;
         description = data.description;
         descriptionEl.textContent = description;
-        resetGame();
+        showStartScreen();
       });
 
+    function showStartScreen() {
+      gameStarted = false;
+      // Hide all game UI
+      descriptionEl.style.display = '';
+      resultEl.style.display = 'none';
+      questionEl.style.display = 'none';
+      scoreEl.style.display = 'none';
+      answersEl.style.display = 'none';
+      hintEl.style.display = 'none';
+      nextBtn.style.display = 'none';
+      retryBtn.style.display = 'none';
+      restartBtn.style.display = 'none';
+      // Show start screen
+      startScreenEl.innerHTML = `
+        <div style="text-align:center; padding: 32px 0 18px 0; max-width: 350px; margin: 0 auto;">
+          <div style="font-size:2em; color:#1976d2; font-weight:bold; margin-bottom:10px;">Are you ready?</div>
+          <div style="font-size:1.1em; margin-bottom:18px;">You will be answering <b>${questions.length}</b> questions.</div>
+          <button class="restart-btn" id="startGameBtn" style="margin-top:10px;">Start Game</button>
+        </div>
+      `;
+      startScreenEl.style.display = '';
+      document.getElementById('startGameBtn').onclick = () => {
+        startScreenEl.style.display = 'none';
+        descriptionEl.style.display = '';
+        gameStarted = true;
+        resetGame();
+      };
+    }
+
     function showQuestion() {
+      if (!gameStarted) return;
       answered = false;
       nextBtn.style.display = 'none';
       restartBtn.style.display = 'none';
