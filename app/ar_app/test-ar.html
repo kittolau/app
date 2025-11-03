@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Sputnik 1 AR Experience</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://aframe.io/releases/1.4.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        
+        /* Size slider container */
+        #size-slider-container {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #size-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* Rotation slider container */
+        #rotation-slider-container {
+            position: fixed;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #rotation-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* X Rotation slider container */
+        #rotation-x-slider-container {
+            position: fixed;
+            bottom: 140px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #rotation-x-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* Z Rotation slider container */
+        #rotation-z-slider-container {
+            position: fixed;
+            bottom: 200px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #rotation-z-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* Confidence slider container */
+        #confidence-slider-container {
+            position: fixed;
+            bottom: 260px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #confidence-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* Position X slider container */
+        #position-x-slider-container {
+            position: fixed;
+            bottom: 320px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,100,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #position-x-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* Position Y slider container */
+        #position-y-slider-container {
+            position: fixed;
+            bottom: 380px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,100,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #position-y-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* Position Z slider container */
+        #position-z-slider-container {
+            position: fixed;
+            bottom: 440px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,100,0,0.8);
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 1000;
+            font-family: Arial, sans-serif;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        #position-z-slider {
+            width: 200px;
+            margin-left: 10px;
+        }
+        
+        /* AR message overlay */
+        #ar-hover-message {
+            display: none;
+            position: fixed;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.85);
+            color: #fff;
+            padding: 24px 36px;
+            border-radius: 16px;
+            font-size: 1.8em;
+            font-family: Arial, sans-serif;
+            z-index: 2000;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            pointer-events: none;
+            transition: opacity 0.3s;
+            text-align: center;
+            max-width: 80%;
+        }
+        
+        #ar-hover-message .subtitle {
+            font-size: 0.6em;
+        }
+        
+        /* Instructions */
+        #instructions {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 144, 255, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 0.95em;
+            z-index: 1500;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 540px) {
+            #size-slider-container,
+            #rotation-slider-container,
+            #rotation-x-slider-container,
+            #rotation-z-slider-container,
+            #confidence-slider-container,
+            #position-x-slider-container,
+            #position-y-slider-container,
+            #position-z-slider-container {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+            
+            #size-slider,
+            #rotation-slider,
+            #rotation-x-slider,
+            #rotation-z-slider,
+            #confidence-slider,
+            #position-x-slider,
+            #position-y-slider,
+            #position-z-slider {
+                width: 150px;
+            }
+            
+            #ar-hover-message {
+                font-size: 1.3em;
+                padding: 16px 24px;
+            }
+            
+            #instructions {
+                font-size: 0.85em;
+                padding: 10px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Instructions for users -->
+    <div id="instructions">
+        Point camera at AR marker to see Sputnik 1
+    </div>
+    
+    <!-- Size control slider -->
+    <div id="size-slider-container">
+        <label for="size-slider">Model Size: <span id="size-value">0.3</span></label>
+        <input type="range" id="size-slider" min="0.01" max="2" step="0.01" value="0.3">
+    </div>
+    
+    <!-- Rotation control slider -->
+    <div id="rotation-slider-container">
+        <label for="rotation-slider">Y Rotation: <span id="rotation-value">0</span>°</label>
+        <input type="range" id="rotation-slider" min="0" max="360" step="1" value="0">
+    </div>
+    
+    <!-- X Rotation control slider -->
+    <div id="rotation-x-slider-container">
+        <label for="rotation-x-slider">X Rotation: <span id="rotation-x-value">0</span>°</label>
+        <input type="range" id="rotation-x-slider" min="0" max="360" step="1" value="0">
+    </div>
+    
+    <!-- Z Rotation control slider -->
+    <div id="rotation-z-slider-container">
+        <label for="rotation-z-slider">Z Rotation: <span id="rotation-z-value">0</span>°</label>
+        <input type="range" id="rotation-z-slider" min="0" max="360" step="1" value="0">
+    </div>
+    
+    <!-- Detection confidence slider -->
+    <div id="confidence-slider-container">
+        <label for="confidence-slider">Detection: <span id="confidence-value">0.5</span></label>
+        <input type="range" id="confidence-slider" min="0.1" max="0.95" step="0.01" value="0.5">
+    </div>
+    
+    <!-- Position X offset slider -->
+    <div id="position-x-slider-container">
+        <label for="position-x-slider">Position X: <span id="position-x-value">0</span></label>
+        <input type="range" id="position-x-slider" min="-2" max="2" step="0.1" value="0">
+    </div>
+    
+    <!-- Position Y offset slider -->
+    <div id="position-y-slider-container">
+        <label for="position-y-slider">Position Y: <span id="position-y-value">0</span></label>
+        <input type="range" id="position-y-slider" min="-2" max="2" step="0.1" value="0">
+    </div>
+    
+    <!-- Position Z offset slider -->
+    <div id="position-z-slider-container">
+        <label for="position-z-slider">Position Z: <span id="position-z-value">0</span></label>
+        <input type="range" id="position-z-slider" min="-2" max="2" step="0.1" value="0">
+    </div>
+    
+    <!-- AR message when marker is detected -->
+    <div id="ar-hover-message">
+        🛰️ Sputnik 1<br/>
+        <span class="subtitle">First artificial Earth satellite (1957)</span>
+    </div>
+    
+    <!-- A-Frame AR Scene -->
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; patternRatio: 0.5;' vr-mode-ui="enabled: false">
+        <!-- Use custom marker pattern -->
+        <a-marker type="pattern" url="model/sputnik1/pattern-marker.patt">
+            <!-- Sputnik 1 3D model -->
+            <a-entity 
+                id="sputnik-model" 
+                gltf-model="model/sputnik1/scene.gltf" 
+                scale="0.3 0.3 0.3" 
+                rotation="0 0 0" 
+                position="0 0 0">
+            </a-entity>
+        </a-marker>
+        <a-entity camera></a-entity>
+    </a-scene>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('=== Sputnik 1 AR App Initialized ===');
+            
+            // Get references to UI elements
+            var marker = document.querySelector('a-marker');
+            var hoverMsg = document.getElementById('ar-hover-message');
+            var instructions = document.getElementById('instructions');
+            var model = document.getElementById('sputnik-model');
+            var scene = document.querySelector('a-scene');
+            
+            console.log('Marker element:', marker ? 'Found' : 'Not found');
+            console.log('Model element:', model ? 'Found' : 'Not found');
+            console.log('Scene element:', scene ? 'Found' : 'Not found');
+            
+            // Continuous marker status logging
+            var markerVisible = false;
+            setInterval(function() {
+                if (marker) {
+                    var isVisible = marker.object3D.visible;
+                    if (isVisible !== markerVisible) {
+                        markerVisible = isVisible;
+                        console.log('Marker visibility changed:', isVisible ? 'VISIBLE' : 'HIDDEN');
+                    }
+                }
+            }, 500);
+            
+            // Marker detection events
+            if (marker) {
+                marker.addEventListener('markerFound', function () {
+                    console.log('✅ Sputnik 1 marker DETECTED!', new Date().toLocaleTimeString());
+                    if (hoverMsg) {
+                        hoverMsg.style.display = 'block';
+                        console.log('Overlay message shown');
+                    }
+                    if (instructions) {
+                        instructions.style.display = 'none';
+                        console.log('Instructions hidden');
+                    }
+                });
+                
+                marker.addEventListener('markerLost', function () {
+                    console.log('❌ Marker LOST!', new Date().toLocaleTimeString());
+                    if (hoverMsg) {
+                        hoverMsg.style.display = 'none';
+                        console.log('Overlay message hidden');
+                    }
+                    if (instructions) {
+                        instructions.style.display = 'block';
+                        console.log('Instructions shown');
+                    }
+                });
+                
+                console.log('Marker event listeners attached successfully');
+            } else {
+                console.error('Failed to attach marker event listeners - marker element not found');
+            }
+            
+            // Model size slider
+            var sizeSlider = document.getElementById('size-slider');
+            var sizeValue = document.getElementById('size-value');
+            if (sizeSlider && model) {
+                sizeSlider.addEventListener('input', function() {
+                    var val = sizeSlider.value;
+                    sizeValue.textContent = val;
+                    model.setAttribute('scale', val + ' ' + val + ' ' + val);
+                    console.log('Model scale changed to:', val);
+                });
+            }
+            
+            // Rotation sliders
+            var rotationSlider = document.getElementById('rotation-slider');
+            var rotationValue = document.getElementById('rotation-value');
+            var rotationXSlider = document.getElementById('rotation-x-slider');
+            var rotationXValue = document.getElementById('rotation-x-value');
+            var rotationZSlider = document.getElementById('rotation-z-slider');
+            var rotationZValue = document.getElementById('rotation-z-value');
+            
+            // Store current rotation values
+            var currentRotation = {
+                x: 0,
+                y: 0,
+                z: 0
+            };
+            
+            // Function to update model rotation
+            function updateModelRotation() {
+                if (model) {
+                    var rotationString = currentRotation.x + ' ' + currentRotation.y + ' ' + currentRotation.z;
+                    model.setAttribute('rotation', rotationString);
+                    console.log('🔄 Model rotation updated:', rotationString);
+                }
+            }
+            
+            // Y rotation slider
+            if (rotationSlider && model) {
+                rotationSlider.addEventListener('input', function() {
+                    var val = rotationSlider.value;
+                    rotationValue.textContent = val;
+                    currentRotation.y = val;
+                    updateModelRotation();
+                });
+            }
+            
+            // X rotation slider
+            if (rotationXSlider && model) {
+                rotationXSlider.addEventListener('input', function() {
+                    var val = rotationXSlider.value;
+                    rotationXValue.textContent = val;
+                    currentRotation.x = val;
+                    updateModelRotation();
+                });
+            }
+            
+            // Z rotation slider
+            if (rotationZSlider && model) {
+                rotationZSlider.addEventListener('input', function() {
+                    var val = rotationZSlider.value;
+                    rotationZValue.textContent = val;
+                    currentRotation.z = val;
+                    updateModelRotation();
+                });
+            }
+            
+            // Position offset sliders
+            var positionXSlider = document.getElementById('position-x-slider');
+            var positionXValue = document.getElementById('position-x-value');
+            var positionYSlider = document.getElementById('position-y-slider');
+            var positionYValue = document.getElementById('position-y-value');
+            var positionZSlider = document.getElementById('position-z-slider');
+            var positionZValue = document.getElementById('position-z-value');
+            
+            // Store current position values
+            var currentPosition = {
+                x: 0,
+                y: 0,
+                z: 0
+            };
+            
+            // Function to update model position
+            function updateModelPosition() {
+                if (model) {
+                    var positionString = currentPosition.x + ' ' + currentPosition.y + ' ' + currentPosition.z;
+                    model.setAttribute('position', positionString);
+                    console.log('📍 Model position updated:', positionString);
+                }
+            }
+            
+            // X position slider
+            if (positionXSlider && model) {
+                positionXSlider.addEventListener('input', function() {
+                    var val = positionXSlider.value;
+                    positionXValue.textContent = val;
+                    currentPosition.x = val;
+                    updateModelPosition();
+                });
+            }
+            
+            // Y position slider
+            if (positionYSlider && model) {
+                positionYSlider.addEventListener('input', function() {
+                    var val = positionYSlider.value;
+                    positionYValue.textContent = val;
+                    currentPosition.y = val;
+                    updateModelPosition();
+                });
+            }
+            
+            // Z position slider
+            if (positionZSlider && model) {
+                positionZSlider.addEventListener('input', function() {
+                    var val = positionZSlider.value;
+                    positionZValue.textContent = val;
+                    currentPosition.z = val;
+                    updateModelPosition();
+                });
+            }
+            
+            // Detection confidence slider
+            var confSlider = document.getElementById('confidence-slider');
+            var confValue = document.getElementById('confidence-value');
+            if (confSlider && scene) {
+                confSlider.addEventListener('input', function() {
+                    var val = confSlider.value;
+                    confValue.textContent = val;
+                    scene.setAttribute('arjs', 'sourceType: webcam; debugUIEnabled: false; patternRatio: ' + val + ';');
+                    console.log('Detection confidence changed to:', val);
+                });
+            }
+            
+            // Camera and scene status logging
+            scene.addEventListener('loaded', function() {
+                console.log('A-Frame scene loaded successfully');
+            });
+            
+            // Log when model is loaded
+            if (model) {
+                model.addEventListener('model-loaded', function() {
+                    console.log('Sputnik 1 3D model loaded successfully');
+                });
+                model.addEventListener('model-error', function(evt) {
+                    console.error('Error loading 3D model:', evt.detail);
+                });
+            }
+            
+            // Hide instructions after 5 seconds
+            setTimeout(function() {
+                if (instructions && hoverMsg.style.display !== 'block') {
+                    instructions.style.opacity = '0';
+                    setTimeout(function() {
+                        instructions.style.display = 'none';
+                    }, 300);
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <m    <section class="player-card">
+      <div class="video-wrap" id="videoWrap">
+        <!-- Primary: MP4 / WebM sources (browsers will pick supported) -->
+        <video id="player" playsinline preload="metadata" crossorigin="anonymous">
+          <!-- Sources will be dynamically added via JavaScript based on query param -->
+          Your browser does not support video playback. Download the WMV file below to play it locally.
+        </video>
+      </div>t="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>WMV Player (Mobile Friendly)</title>
+  <style>
+    :root{
+      --bg:#0b0f14;--panel:#0f1720;--accent:#1e90ff;--muted:#9aa6b2;--white:#fff;
+    }
+    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--white)}
+    .wrap{max-width:980px;margin:0 auto;padding:16px;box-sizing:border-box}
+    header{display:flex;align-items:center;gap:12px}
+    h1{font-size:1.1rem;margin:0;color:var(--accent)}
+
+    .player-card{background:var(--panel);border-radius:14px;padding:12px;margin-top:16px;box-shadow:0 6px 18px rgba(2,6,23,0.6)}
+    .video-wrap{position:relative;border-radius:10px;overflow:hidden;background:#000}
+    video{display:block;width:100%;height:auto;max-height:70vh;background:#000}
+
+    /* custom controls */
+    .controls{display:flex;flex-direction:column;gap:8px;padding:10px}
+    .controls-row{display:flex;align-items:center;gap:8px}
+    .big-btn{background:transparent;border:none;color:var(--white);font-size:1.6rem;padding:8px;border-radius:8px}
+  .seek{-webkit-appearance:none;appearance:none;width:100%;height:6px;background:linear-gradient(90deg,var(--accent) 0,var(--accent) var(--seek-percent, 0%),#23303a 0);border-radius:6px}
+  .muted{color:var(--muted)}
+  .meta-row{margin-top:8px;display:flex;justify-content:space-between;align-items:center}
+  .note{color:var(--muted);font-size:0.9rem}
+  .unsupported-note{display:none;margin-top:12px;color:var(--muted);font-size:0.95rem}
+    .seek::-webkit-slider-thumb{appearance:none;width:18px;height:18px;background:var(--white);border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,0.6);cursor:pointer}
+    .time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:0.9rem}
+    .spacer{flex:1}
+    .mini{font-size:0.95rem}
+    .download-link{display:inline-flex;align-items:center;gap:8px;background:#0b2a4a;color:var(--white);padding:8px 12px;border-radius:8px;text-decoration:none}
+
+    /* responsive */
+    @media (max-width:540px){
+      h1{font-size:1rem}
+      .big-btn{font-size:1.4rem;padding:6px}
+      .wrap{padding:8px}
+      .player-card{padding:8px;margin-top:8px}
+      .controls{padding:8px;gap:6px}
+      .meta-row{flex-direction:column;align-items:flex-start;gap:8px}
+      .note{font-size:0.85rem}
+      .download-link{width:100%;justify-content:center}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>WMV Player — Mobile Friendly</h1>
+    </header>
+
+    <section class="player-card">
+      <div class="video-wrap" id="videoWrap">
+        <!-- Primary: MP4 / WebM sources (browsers will pick supported) -->
+        <video id="player" playsinline webkit-playsinline preload="metadata" crossorigin="anonymous">
+          <source src="video/sample.mp4" type="video/mp4">
+          <source src="video/sample.webm" type="video/webm">
+          <!-- If browser cannot play common formats, provide a link to the WMV file and fallback text -->
+          Your browser does not support MP4/WebM playback. Download the WMV file below to play it locally.
+        </video>
+      </div>
+
+      <div class="controls" id="controls">
+        <div class="controls-row">
+          <button id="playBtn" class="big-btn" aria-label="Play/Pause">▶</button>
+          <div class="time mini" id="current">0:00</div>
+          <input id="seek" class="seek" type="range" min="0" max="100" value="0" step="0.1" aria-label="Seek">
+          <div class="time mini" id="duration">0:00</div>
+        </div>
+
+        <div class="controls-row">
+          <div class="spacer"></div>
+          <label for="volume" class="mini muted">Volume</label>
+          <input id="volume" type="range" min="0" max="1" step="0.05" value="1">
+          <button id="fsBtn" class="big-btn" title="Fullscreen">⤢</button>
+        </div>
+
+        <div class="meta-row">
+          <div class="note">If your browser can't play WMV, download it and open with a native player.</div>
+          <a id="downloadWmv" class="download-link" href="#" download>Download WMV</a>
+        </div>
+      </div>
+
+      <div id="unsupported" class="unsupported-note">
+        This device/browser cannot play the included MP4/WebM sources. The WMV file is provided for download.
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // Parse query string and load video
+    const urlParams = new URLSearchParams(window.location.search);
+    const videoFile = urlParams.get('video') || 'sample.wmv';
+    const videoBasePath = '/asset/video/';
+    const videoPath = videoBasePath + videoFile;
+    
+    // Get file name without extension
+    const videoNameNoExt = videoFile.replace(/\.[^/.]+$/, '');
+    
+    // Assistant: wire up controls
+    const player = document.getElementById('player');
+    const playBtn = document.getElementById('playBtn');
+    const seek = document.getElementById('seek');
+    const currentEl = document.getElementById('current');
+    const durationEl = document.getElementById('duration');
+    const volume = document.getElementById('volume');
+    const fsBtn = document.getElementById('fsBtn');
+    const unsupported = document.getElementById('unsupported');
+    const downloadWmv = document.getElementById('downloadWmv');
+
+    // Set up video sources dynamically
+    function setupVideoSources() {
+      // Clear existing sources
+      player.innerHTML = '';
+      
+      // Try to add MP4 source (most compatible)
+      const mp4Source = document.createElement('source');
+      mp4Source.src = videoBasePath + videoNameNoExt + '.mp4';
+      mp4Source.type = 'video/mp4';
+      player.appendChild(mp4Source);
+      
+      // Try to add WebM source
+      const webmSource = document.createElement('source');
+      webmSource.src = videoBasePath + videoNameNoExt + '.webm';
+      webmSource.type = 'video/webm';
+      player.appendChild(webmSource);
+      
+      // Try to add WMV source (limited browser support)
+      const wmvSource = document.createElement('source');
+      wmvSource.src = videoPath;
+      wmvSource.type = 'video/x-ms-wmv';
+      player.appendChild(wmvSource);
+      
+      // Set download link
+      downloadWmv.href = videoPath;
+      downloadWmv.download = videoFile;
+      
+      // Reload player
+      player.load();
+    }
+    
+    setupVideoSources();
+
+    // format time
+    function fmt(s){
+      if (!isFinite(s)) return '0:00';
+      s = Math.floor(s);
+      const m = Math.floor(s/60);
+      const sec = (s%60).toString().padStart(2,'0');
+      return `${m}:${sec}`;
+    }
+
+    // initial volume
+    player.volume = parseFloat(volume.value);
+
+    // update duration when metadata loaded
+    player.addEventListener('loadedmetadata', ()=>{
+      durationEl.textContent = fmt(player.duration);
+      seek.max = player.duration;
+      // if canPlayType fails for everything, show unsupported
+      const canPlay = player.canPlayType('video/mp4') || player.canPlayType('video/webm');
+      if (!canPlay) unsupported.style.display = 'block';
+    });
+
+    // update time
+    player.addEventListener('timeupdate', ()=>{
+      currentEl.textContent = fmt(player.currentTime);
+      if (!seek.dragging) seek.value = player.currentTime;
+      // update CSS var for progress color
+      const pct = (player.currentTime / Math.max(1, player.duration))*100;
+      seek.style.setProperty('--seek-percent', pct + '%');
+    });
+
+    // play/pause
+    playBtn.addEventListener('click', ()=>{
+      if (player.paused) { player.play(); playBtn.textContent='⏸'; }
+      else { player.pause(); playBtn.textContent='▶'; }
+    });
+
+    // seek interactions (dragging flag)
+    seek.addEventListener('input', ()=>{
+      seek.dragging = true;
+      currentEl.textContent = fmt(seek.value);
+      const pct = (seek.value / Math.max(1, seek.max))*100;
+      seek.style.setProperty('--seek-percent', pct + '%');
+    });
+    seek.addEventListener('change', ()=>{
+      player.currentTime = parseFloat(seek.value);
+      seek.dragging = false;
+    });
+
+    // volume
+    volume.addEventListener('input', ()=>{ player.volume = parseFloat(volume.value); });
+
+    // double tap to toggle play
+    let lastTap = 0;
+    document.getElementById('videoWrap').addEventListener('touchend', (e)=>{
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        if (player.paused) { player.play(); playBtn.textContent='⏸'; }
+        else { player.pause(); playBtn.textContent='▶'; }
+      }
+      lastTap = now;
+    });
+
+    // fullscreen
+    fsBtn.addEventListener('click', async ()=>{
+      try{
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+        else await document.exitFullscreen();
+      }catch(e){console.warn('FS error',e)}
+    });
+
+    // keyboard accessibility
+    document.addEventListener('keydown', (e)=>{
+      if (e.code === 'Space') { e.preventDefault(); playBtn.click(); }
+      if (e.key === 'ArrowRight') player.currentTime = Math.min(player.duration, player.currentTime + 5);
+      if (e.key === 'ArrowLeft') player.currentTime = Math.max(0, player.currentTime - 5);
+    });
+
+    // show download link only if WMV present
+    (async function(){
+      try{
+        const resp = await fetch(downloadWmv.href, {method:'HEAD'});
+        if (!resp.ok) downloadWmv.style.display='none';
+      }catch(e){ downloadWmv.style.display='none'; }
+    })();
+
+    // expose play state changes to update button (in case user taps native controls)
+    player.addEventListener('play', ()=> playBtn.textContent='⏸');
+    player.addEventListener('pause', ()=> playBtn.textContent='▶');
+
+    // mobile: prefer inline playback
+    player.addEventListener('webkitbeginfullscreen', ()=>{ /* no-op */ });
+
+  </script>
+</body>
+</html>

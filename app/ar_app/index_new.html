@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AR Viewer - Dynamic Model Loading</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="lib/aframe.min.js"></script>
+    <script src="lib/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        
+        /* AR message overlay */
+        #ar-hover-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        #ar-hover-message h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #speak-button {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(33, 150, 243, 0.9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s;
+        }
+        
+        #speak-button:hover {
+            background-color: rgba(33, 150, 243, 1);
+        }
+        
+        #speak-button:active {
+            background-color: rgba(25, 118, 210, 1);
+        }
+        
+        #speak-button.speaking {
+            background-color: rgba(244, 67, 54, 0.9);
+        }
+        
+        #speak-button.speaking:hover {
+            background-color: rgba(244, 67, 54, 1);
+        }
+        
+        /* Instructions */
+        #instructions {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 144, 255, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 0.95em;
+            z-index: 1500;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 540px) {
+            #ar-hover-message {
+                font-size: 1.3em;
+                padding: 16px 24px;
+            }
+            
+            #instructions {
+                font-size: 0.85em;
+                padding: 10px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Instructions for users -->
+    <div id="instructions">
+        請將相機對準AR標記以查看
+    </div>
+    
+    <!-- AR message when marker is detected -->
+    <div id="ar-hover-message">
+        <h3 id="model-title">Model Detected</h3>
+    </div>
+    
+    <button id="speak-button">🔊 聽講解</button>
+    
+    <!-- A-Frame AR Scene -->
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;' vr-mode-ui="enabled: false" id="ar-scene">
+        <!-- Multiple markers - AR.js can handle multiple patterns but shows one at a time -->
+        <a-entity camera></a-entity>
+    </a-scene>
+    
+    <script>
+        // Global variables for multi-model support
+        var modelConfigs = {};
+        var modelDescriptions = {};
+        var availableModels = [];
+        var currentModel = null;
+        var speechSynthesis = window.speechSynthesis;
+        var currentUtterance = null;
+        
+        console.log('=== AR Viewer (Multi-Marker Support) ===');
+        
+        // Load model list and cache all configurations
+        fetch('model/model_list.json')
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Model list not found');
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('✓ Model list loaded:', data);
+                availableModels = data.models || [];
+                
+                // Load and cache all model configurations
+                return Promise.all(availableModels.map(function(modelName) {
+                    return loadModelConfig(modelName);
+                }));
+            })
+            .then(function() {
+                console.log('✓ All model configurations cached');
+                console.log('Available models:', Object.keys(modelConfigs));
+                
+                // Initialize AR scene with all markers
+                initializeARScene();
+            })
+            .catch(function(error) {
+                console.error('⚠️ Failed to load model configurations:', error);
+                // Fallback to single model mode
+                initializeFallbackMode();
+            });
+        
+        // Load configuration for a specific model
+        function loadModelConfig(modelName) {
+            return fetch('model/' + modelName + '/config.json')
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('Config not found for ' + modelName);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    // Cache model configuration
+                    modelConfigs[modelName] = {
+                        size: data.size || 0.3,
+                        posX: data.position ? data.position.x || 0 : 0,
+                        posY: data.position ? data.position.y || 0 : 0,
+                        posZ: data.position ? data.position.z || 0 : 0,
+                        rotX: data.rotation ? data.rotation.x || 0 : 0,
+                        rotY: data.rotation ? data.rotation.y || 0 : 0,
+                        rotZ: data.rotation ? data.rotation.z || 0 : 0
+                    };
+                    
+                    // Cache description info
+                    modelDescriptions[modelName] = {
+                        title: data.desc_info ? data.desc_info.title || modelName : modelName,
+                        hk_narrative: data.desc_info ? data.desc_info.hk_narrative || 'AR Model' : 'AR Model'
+                    };
+                    
+                    console.log('✓ Cached config for:', modelName);
+                })
+                .catch(function(error) {
+                    console.error('⚠️ Failed to load config for', modelName, ':', error);
+                    // Set default config for failed models
+                    modelConfigs[modelName] = {
+                        size: 0.3, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0
+                    };
+                    modelDescriptions[modelName] = {
+                        title: modelName,
+                        hk_narrative: 'AR Model'
+                    };
+                });
+        }
+        
+        // Initialize AR scene with multiple markers
+        function initializeARScene() {
+            var scene = document.getElementById('ar-scene');
+            if (!scene) {
+                console.error('AR scene not found');
+                return;
+            }
+            
+            if (availableModels.length === 0) {
+                console.error('No models available');
+                return;
+            }
+            
+            // Create a marker for each model - AR.js will detect whichever is visible
+            availableModels.forEach(function(modelName) {
+                createMarkerForModel(scene, modelName);
+            });
+            
+            console.log('✓ AR scene initialized with', availableModels.length, 'markers');
+        }
+        
+        // Create a marker and model for a specific model
+        function createMarkerForModel(scene, modelName) {
+            // Create marker element
+            var marker = document.createElement('a-marker');
+            marker.setAttribute('type', 'pattern');
+            marker.setAttribute('url', 'model/' + modelName + '/pattern-marker.patt');
+            marker.setAttribute('id', 'marker-' + modelName);
+            marker.setAttribute('raycaster', 'objects: .clickable');
+            
+            // Create model entity
+            var modelEntity = document.createElement('a-entity');
+            modelEntity.setAttribute('id', 'model-' + modelName);
+            modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/model.gltf');
+            
+            // Apply cached configuration
+            var config = modelConfigs[modelName];
+            if (config) {
+                modelEntity.setAttribute('scale', config.size + ' ' + config.size + ' ' + config.size);
+                modelEntity.setAttribute('position', config.posX + ' ' + config.posY + ' ' + config.posZ);
+                modelEntity.setAttribute('rotation', config.rotX + ' ' + config.rotY + ' ' + config.rotZ);
+            }
+            
+            // Add model to marker
+            marker.appendChild(modelEntity);
+            
+            // Add marker event listeners
+            marker.addEventListener('markerFound', function() {
+                onMarkerFound(modelName);
+            });
+            
+            marker.addEventListener('markerLost', function() {
+                onMarkerLost(modelName);
+            });
+            
+            // Add marker to scene
+            scene.appendChild(marker);
+            
+            console.log('✓ Created marker for:', modelName);
+        }
+        
+        // Handle marker found event
+        function onMarkerFound(modelName) {
+            console.log('✅ Marker detected:', modelName, new Date().toLocaleTimeString());
+            currentModel = modelName;
+            
+            // Update AR message with model-specific info
+            updateARMessage(modelName);
+            
+            // Show overlay, speak button and hide instructions
+            var hoverMsg = document.getElementById('ar-hover-message');
+            var speakBtn = document.getElementById('speak-button');
+            var instructions = document.getElementById('instructions');
+            
+            if (hoverMsg) {
+                hoverMsg.style.display = 'block';
+            }
+            if (speakBtn) {
+                speakBtn.style.display = 'block';
+            }
+            if (instructions) {
+                instructions.style.display = 'none';
+            }
+        }
+        
+        // Handle marker lost event
+        function onMarkerLost(modelName) {
+            console.log('❌ Marker lost:', modelName, new Date().toLocaleTimeString());
+            
+            // Only hide if this was the current model
+            if (currentModel === modelName) {
+                currentModel = null;
+                
+                // Stop any ongoing speech
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                }
+                
+                // Hide overlay, speak button and show instructions
+                var hoverMsg = document.getElementById('ar-hover-message');
+                var speakBtn = document.getElementById('speak-button');
+                var instructions = document.getElementById('instructions');
+                
+                if (hoverMsg) {
+                    hoverMsg.style.display = 'none';
+                }
+                if (speakBtn) {
+                    speakBtn.style.display = 'none';
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 聽講解';
+                }
+                if (instructions) {
+                    instructions.style.display = 'block';
+                }
+            }
+        }
+        
+        // Initialize fallback mode for single model
+        function initializeFallbackMode() {
+            console.log('Initializing fallback single-model mode');
+            // Fallback to original single model behavior
+            var modelName = 'sputnik1';
+            availableModels = [modelName];
+            
+            // Set default configs
+            modelConfigs[modelName] = {
+                size: 0.3, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0
+            };
+            modelDescriptions[modelName] = {
+                title: 'AR Model',
+                hk_narrative: 'Point camera at marker'
+            };
+            
+            initializeARScene();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function () {
+            // Scene initialization is now handled by the model loading process
+            console.log('DOM loaded - waiting for model configurations...');
+        });
+        
+        // Function to update AR message content
+        function updateARMessage(modelName) {
+            var desc = modelDescriptions[modelName];
+            
+            var titleEl = document.getElementById('model-title');
+            
+            if (titleEl && desc && desc.title) {
+                titleEl.textContent = desc.title;
+            }
+        }
+        
+        // Speak the narrative using Web Speech API
+        function speakNarrative(modelName) {
+            var desc = modelDescriptions[modelName];
+            
+            if (!desc || !desc.hk_narrative) {
+                console.warn('No narrative found for:', modelName);
+                return;
+            }
+            
+            // Stop any ongoing speech
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            
+            // Create utterance
+            currentUtterance = new SpeechSynthesisUtterance(desc.hk_narrative);
+            
+            // Set language to Cantonese (Hong Kong)
+            currentUtterance.lang = 'zh-HK';
+            
+            // Try to find a Cantonese voice
+            var voices = speechSynthesis.getVoices();
+            var cantoneseVoice = voices.find(function(voice) {
+                return voice.lang === 'zh-HK' || voice.lang.startsWith('zh-HK');
+            });
+            
+            if (cantoneseVoice) {
+                currentUtterance.voice = cantoneseVoice;
+            }
+            
+            // Set speech parameters
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1;
+            currentUtterance.volume = 1;
+            
+            // Update button state
+            var speakBtn = document.getElementById('speak-button');
+            if (speakBtn) {
+                speakBtn.classList.add('speaking');
+                speakBtn.textContent = '⏹ 停止';
+            }
+            
+            // Handle speech end
+            currentUtterance.onend = function() {
+                if (speakBtn) {
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 聽講解';
+                }
+            };
+            
+            // Handle speech error
+            currentUtterance.onerror = function(event) {
+                console.error('Speech error:', event);
+                if (speakBtn) {
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 聽講解';
+                }
+            };
+            
+            // Speak
+            speechSynthesis.speak(currentUtterance);
+            console.log('🔊 Speaking:', desc.title);
+        }
+        
+        // Toggle speech (play/stop)
+        function toggleSpeech() {
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                var speakBtn = document.getElementById('speak-button');
+                if (speakBtn) {
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 聽講解';
+                }
+            } else if (currentModel) {
+                speakNarrative(currentModel);
+            }
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            console.log('=== AR Viewer with Multi-Marker Support and Speech ===');
+            
+            // Set up speak button
+            var speakBtn = document.getElementById('speak-button');
+            if (speakBtn) {
+                speakBtn.addEventListener('click', toggleSpeech);
+            }
+            
+            // Load voices (needed for some browsers)
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = function() {
+                    speechSynthesis.getVoices();
+                };
+            }
+        });
+    </script>
+</body>
+</html>

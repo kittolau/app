@@ -1,0 +1,23 @@
+{
+  "name": "kitto-app",
+  "version": "1.0.0",
+  "description": "Interactive educational app with AR, games, and video player",
+  "scripts": {
+    "start": "npx http-server -p 8000 -c-1 --cors",
+    "dev": "npx http-server -p 8000 -c-1 --cors -o /app",
+    "serve": "python3 -m http.server 8000",
+    "app": "npx http-server -p 8000 -c-1 --cors -o /app",
+    "preview": "npx http-server -p 8000 -c-1 --cors -o /preview.html"
+  },
+  "keywords": [
+    "ar",
+    "education",
+    "games",
+    "video-player"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}

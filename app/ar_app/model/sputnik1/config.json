@@ -1,0 +1,18 @@
+{
+  "size": 0.4,
+  "position": {
+    "x": 0,
+    "y": 1.2,
+    "z": 0
+  },
+  "rotation": {
+    "x": 90,
+    "y": 0,
+    "z": 0
+  },
+  "desc_info": {
+    "title": "Sputnik 1 (史普尼克 1 號)",
+    "youtube_video_src": "https://www.youtube.com/watch?v=DTDb3eKpPiw",
+    "hk_narrative": "Sputnik 1 (史普尼克 1 號) 是蘇聯於 1957 年 10 月 4 日發射的人類首顆人造衛星。其主要用途在於技術驗證與科學探測。它成功證明將物體送入地球軌道的可行性，並透過其發出的「嗶嗶」聲無線電訊號，幫助科學家研究高層大氣的密度與電離層，象徵住人類探索宇宙的偉大征程。"
+  }
+}
