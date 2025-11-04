@@ -9,7 +9,20 @@
     <!-- PWA Meta Tags -->
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#0a0e27">
-    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    
+    <!-- iOS Safari PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Kitto App">
+    
+    <!-- iOS App Icons - Multiple Sizes -->
+    <link rel="apple-touch-icon" href="/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/icon-128x128.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon-192x192.png">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/icon-192x192.png">
 
     <style>
         * {
@@ -763,11 +776,24 @@
 
             <!-- Manual install instructions (hidden by default, shown if auto-install not available) -->
             <div id="manualInstructions" class="manual-instructions" style="display: none;">
-                <p class="manual-title">📱 Manual Installation</p>
-                <div class="manual-content">
+                <p class="manual-title">📱 How to Install</p>
+                <div class="manual-content" id="iosInstructions" style="display: none;">
+                    <p><strong>iOS Installation Steps:</strong></p>
+                    <p>1️⃣ Tap the <strong>Share</strong> button <span style="font-size: 1.5em;">⎋</span> at the bottom of Safari</p>
+                    <p>2️⃣ Scroll down and tap <strong>"Add to Home Screen"</strong></p>
+                    <p>3️⃣ Tap <strong>"Add"</strong> in the top right corner</p>
+                    <p>4️⃣ Find the Kitto App icon on your home screen! 🎉</p>
+                </div>
+                <div class="manual-content" id="androidInstructions" style="display: none;">
+                    <p><strong>Android Installation Steps:</strong></p>
+                    <p>1️⃣ Tap the <strong>menu</strong> button (⋮) in the top right</p>
+                    <p>2️⃣ Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong></p>
+                    <p>3️⃣ Tap <strong>"Install"</strong></p>
+                    <p>4️⃣ Find the Kitto App icon on your home screen! 🎉</p>
+                </div>
+                <div class="manual-content" id="generalInstructions" style="display: block;">
                     <p><strong>Android (Chrome):</strong> Tap menu (⋮) → "Add to Home Screen"</p>
-                    <p><strong>iOS (Safari):</strong> Tap Share <span style="font-size: 1.2em;">⎋</span> → "Add to Home
-                        Screen"</p>
+                    <p><strong>iOS (Safari):</strong> Tap Share <span style="font-size: 1.2em;">⎋</span> → "Add to Home Screen"</p>
                 </div>
             </div>
         </section>
@@ -793,6 +819,23 @@
         if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
             console.log('✅ App already installed, redirecting to app...');
             window.location.href = '/index.html';
+        }
+
+        // Mobile detection functions
+        function isMobileDevice() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
+        function isIOS() {
+            return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+        }
+
+        function isAndroid() {
+            return /Android/i.test(navigator.userAgent);
+        }
+
+        function isInStandaloneMode() {
+            return window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
         }
 
         // Generate stars
@@ -857,6 +900,34 @@
             e.preventDefault();
             deferredPrompt = e;
             console.log('🚀 Installation prompt available');
+
+            // Auto-trigger install prompt for mobile devices
+            if (isMobileDevice() && !isInStandaloneMode()) {
+                console.log('📱 Mobile device detected - Auto-showing install prompt in 2 seconds...');
+                
+                // Wait 2 seconds to let page load, then show prompt
+                setTimeout(() => {
+                    if (deferredPrompt && isAndroid()) {
+                        console.log('🤖 Android detected - Triggering automatic install prompt');
+                        triggerInstall();
+                    } else if (isIOS()) {
+                        console.log('🍎 iOS detected - Showing manual instructions');
+                        manualInstructions.style.display = 'block';
+                        
+                        // Update button for iOS
+                        installButton.innerHTML = `
+                            <span class="btn-icon">🍎</span>
+                            <span class="btn-text">
+                                <span class="btn-main">Install on iOS</span>
+                                <span class="btn-sub">See instructions below ↓</span>
+                            </span>
+                        `;
+                        
+                        // Scroll to instructions
+                        manualInstructions.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 2000);
+            }
         });
 
         window.addEventListener('appinstalled', () => {
@@ -875,13 +946,43 @@
                 console.log('📱 Showing manual installation instructions');
                 manualInstructions.style.display = 'block';
 
-                installButton.innerHTML = `
-          <span class="btn-icon">📱</span>
-          <span class="btn-text">
-            <span class="btn-main">Manual Install</span>
-            <span class="btn-sub">See instructions below</span>
-          </span>
-        `;
+                // Show platform-specific instructions
+                if (isIOS()) {
+                    document.getElementById('iosInstructions').style.display = 'block';
+                    document.getElementById('androidInstructions').style.display = 'none';
+                    document.getElementById('generalInstructions').style.display = 'none';
+                } else if (isAndroid()) {
+                    document.getElementById('iosInstructions').style.display = 'none';
+                    document.getElementById('androidInstructions').style.display = 'block';
+                    document.getElementById('generalInstructions').style.display = 'none';
+                }
+
+                // Update button based on platform
+                if (isIOS()) {
+                    installButton.innerHTML = `
+                        <span class="btn-icon">🍎</span>
+                        <span class="btn-text">
+                            <span class="btn-main">Install on iOS</span>
+                            <span class="btn-sub">Tap Share → Add to Home Screen</span>
+                        </span>
+                    `;
+                } else if (isAndroid()) {
+                    installButton.innerHTML = `
+                        <span class="btn-icon">🤖</span>
+                        <span class="btn-text">
+                            <span class="btn-main">Install on Android</span>
+                            <span class="btn-sub">Tap menu ⋮ → Install app</span>
+                        </span>
+                    `;
+                } else {
+                    installButton.innerHTML = `
+                        <span class="btn-icon">📱</span>
+                        <span class="btn-text">
+                            <span class="btn-main">Manual Install</span>
+                            <span class="btn-sub">See instructions below</span>
+                        </span>
+                    `;
+                }
 
                 return;
             }
