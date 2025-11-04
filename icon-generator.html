@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Generate PWA Icon</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 20px;
+      text-align: center;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    h1 { color: #1976d2; }
+    p { color: #666; margin: 20px 0; }
+    canvas {
+      border: 2px solid #ddd;
+      border-radius: 8px;
+      margin: 20px 0;
+      max-width: 100%;
+    }
+    button {
+      background: #1976d2;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 10px;
+    }
+    button:hover {
+      background: #1565c0;
+    }
+    .icon-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .icon-item {
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 8px;
+    }
+    .icon-item canvas {
+      width: 100%;
+      height: auto;
+      margin: 5px 0;
+    }
+    .size-label {
+      font-size: 14px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 PWA Icon Generator</h1>
+    <p>This tool generates all required icons for your PWA. Right-click each icon below and "Save Image As..." to your /icons/ folder.</p>
+    
+    <div class="icon-grid" id="iconGrid"></div>
+    
+    <button onclick="downloadAll()">Download All Icons (as ZIP concept)</button>
+    <p style="font-size: 14px; color: #999;">Note: Save each icon manually with the name shown below it (e.g., icon-192x192.png)</p>
+  </div>
+
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+    const iconGrid = document.getElementById('iconGrid');
+    
+    // Generate icons for each size
+    sizes.forEach(size => {
+      const iconItem = document.createElement('div');
+      iconItem.className = 'icon-item';
+      
+      const canvas = document.createElement('canvas');
+      canvas.width = size;
+      canvas.height = size;
+      const ctx = canvas.getContext('2d');
+      
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#1976d2');
+      gradient.addColorStop(1, '#1565c0');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+      
+      // Add rounded corners effect
+      ctx.globalCompositeOperation = 'destination-in';
+      ctx.beginPath();
+      const radius = size * 0.2;
+      ctx.roundRect(0, 0, size, size, radius);
+      ctx.fill();
+      ctx.globalCompositeOperation = 'source-over';
+      
+      // Draw icon text
+      ctx.fillStyle = 'white';
+      ctx.font = `bold ${size * 0.35}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('K', size / 2, size / 2);
+      
+      // Add emoji overlay
+      ctx.font = `${size * 0.4}px Arial`;
+      ctx.fillText('🎓', size / 2, size / 2.8);
+      
+      const label = document.createElement('div');
+      label.className = 'size-label';
+      label.textContent = `icon-${size}x${size}.png`;
+      
+      const downloadBtn = document.createElement('button');
+      downloadBtn.textContent = 'Download';
+      downloadBtn.onclick = () => downloadIcon(canvas, size);
+      
+      iconItem.appendChild(canvas);
+      iconItem.appendChild(label);
+      iconItem.appendChild(downloadBtn);
+      iconGrid.appendChild(iconItem);
+    });
+    
+    function downloadIcon(canvas, size) {
+      const link = document.createElement('a');
+      link.download = `icon-${size}x${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+    
+    function downloadAll() {
+      alert('Click the Download button under each icon to save them individually to your /icons/ folder.');
+    }
+
+    // Polyfill for roundRect if not available
+    if (!CanvasRenderingContext2D.prototype.roundRect) {
+      CanvasRenderingContext2D.prototype.roundRect = function(x, y, width, height, radius) {
+        this.beginPath();
+        this.moveTo(x + radius, y);
+        this.lineTo(x + width - radius, y);
+        this.quadraticCurveTo(x + width, y, x + width, y + radius);
+        this.lineTo(x + width, y + height - radius);
+        this.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+        this.lineTo(x + radius, y + height);
+        this.quadraticCurveTo(x, y + height, x, y + height - radius);
+        this.lineTo(x, y + radius);
+        this.quadraticCurveTo(x, y, x + radius, y);
+        this.closePath();
+      };
+    }
+  </script>
+</body>
+</html>
