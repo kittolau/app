@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AR Face Filter Selfie - Kitto App</title>
+    
+    <!-- iOS Safari PWA Support -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Face Filter">
+    <link rel="apple-touch-icon" href="/icon-192x192.png">
+    
+    <!-- MediaPipe Face Detection -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4/face_detection.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils@0.3/camera_utils.js" crossorigin="anonymous"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+        }
+        
+        /* Main container */
+        .container {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        /* Camera view container */
+        .camera-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            height: 480px;
+            background: #000;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Video element (hidden, used for processing) */
+        #video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect */
+            display: none;
+        }
+        
+        /* Canvas for drawing face detection and filters */
+        #canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            transform: scaleX(-1); /* Mirror effect */
+        }
+        
+        /* Header */
+        .header {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+        }
+        
+        .header h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        /* Status indicator */
+        .status {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 99;
+        }
+        
+        .status.detecting {
+            background: rgba(76, 175, 80, 0.9);
+        }
+        
+        /* Filter selector */
+        .filter-selector {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 100;
+        }
+        
+        .filter-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background-size: cover;
+            background-position: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .filter-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .filter-btn.active {
+            border-color: #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
+        }
+        
+        /* Filter previews */
+        .filter-btn.none {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .filter-btn.halo {
+            background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
+        }
+        
+        .filter-btn.crown {
+            background: linear-gradient(135deg, #FFD700 0%, #FF6B6B 100%);
+        }
+        
+        .filter-btn.bunny {
+            background: linear-gradient(135deg, #FFC0CB 0%, #FF69B4 100%);
+        }
+        
+        .filter-btn.heart {
+            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
+        }
+        
+        /* Control buttons */
+        .controls {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        /* Capture button */
+        .capture-btn {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 5px solid white;
+            background: #FF1493;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 20px rgba(255, 20, 147, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+        }
+        
+        .capture-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .capture-btn:active {
+            transform: scale(0.95);
+        }
+        
+        /* Switch camera button */
+        .switch-camera-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background: rgba(0, 0, 0, 0.6);
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .switch-camera-btn:hover {
+            background: rgba(0, 0, 0, 0.8);
+        }
+        
+        /* Photo preview modal */
+        .photo-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .photo-preview.show {
+            display: flex;
+        }
+        
+        .photo-preview img {
+            max-width: 90%;
+            max-height: 70vh;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .photo-actions {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .photo-btn {
+            padding: 12px 30px;
+            border-radius: 25px;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .photo-btn.download {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .photo-btn.retake {
+            background: #FF5722;
+            color: white;
+        }
+        
+        .photo-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Loading screen */
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            color: white;
+        }
+        
+        .loading.hidden {
+            display: none;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Error message */
+        .error {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(244, 67, 54, 0.95);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            z-index: 1001;
+            display: none;
+            text-align: center;
+        }
+        
+        .error.show {
+            display: block;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .camera-container {
+                height: 100vh;
+                max-width: 100%;
+                border-radius: 0;
+            }
+            
+            .header {
+                top: 10px;
+            }
+            
+            .filter-selector {
+                bottom: 100px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading screen -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h2>Initializing Face Detection...</h2>
+        <p>Please allow camera access</p>
+    </div>
+    
+    <!-- Error message -->
+    <div class="error" id="error">
+        <h3>⚠️ Error</h3>
+        <p id="error-message">Something went wrong</p>
+    </div>
+    
+    <!-- Main container -->
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📸 AR Face Filter Selfie</h1>
+        </div>
+        
+        <!-- Status indicator -->
+        <div class="status" id="status">
+            🔍 Looking for faces...
+        </div>
+        
+        <!-- Camera view -->
+        <div class="camera-container">
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+        </div>
+        
+        <!-- Filter selector -->
+        <div class="filter-selector">
+            <button class="filter-btn none active" data-filter="none" title="No Filter">❌</button>
+            <button class="filter-btn halo" data-filter="halo" title="Halo">😇</button>
+            <button class="filter-btn crown" data-filter="crown" title="Crown">👑</button>
+            <button class="filter-btn bunny" data-filter="bunny" title="Bunny Ears">🐰</button>
+            <button class="filter-btn heart" data-filter="heart" title="Hearts">💕</button>
+        </div>
+        
+        <!-- Controls -->
+        <div class="controls">
+            <button class="switch-camera-btn" id="switchCamera" title="Switch Camera">🔄</button>
+            <button class="capture-btn" id="captureBtn" title="Take Photo">📷</button>
+        </div>
+    </div>
+    
+    <!-- Photo preview modal -->
+    <div class="photo-preview" id="photoPreview">
+        <img id="photoImg" src="" alt="Captured photo">
+        <div class="photo-actions">
+            <button class="photo-btn download" id="downloadBtn">💾 Download</button>
+            <button class="photo-btn retake" id="retakeBtn">🔄 Retake</button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let video, canvas, ctx;
+        let faceDetection;
+        let camera;
+        let currentFilter = 'none';
+        let facingMode = 'user'; // 'user' = front camera, 'environment' = back camera
+        let detectedFaces = [];
+        
+        // Initialize on page load
+        window.addEventListener('load', init);
+        
+        async function init() {
+            try {
+                // Get DOM elements
+                video = document.getElementById('video');
+                canvas = document.getElementById('canvas');
+                ctx = canvas.getContext('2d');
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                // Initialize MediaPipe Face Detection
+                await initFaceDetection();
+                
+                // Start camera
+                await startCamera();
+                
+                // Hide loading
+                document.getElementById('loading').classList.add('hidden');
+                
+                console.log('✅ Face filter app initialized');
+            } catch (error) {
+                console.error('❌ Initialization error:', error);
+                showError('Failed to initialize. Please check camera permissions.');
+            }
+        }
+        
+        // Initialize MediaPipe Face Detection
+        async function initFaceDetection() {
+            faceDetection = new FaceDetection({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_detection@0.4/${file}`;
+                }
+            });
+            
+            faceDetection.setOptions({
+                model: 'short',
+                minDetectionConfidence: 0.5
+            });
+            
+            faceDetection.onResults(onResults);
+            
+            console.log('✅ Face detection initialized');
+        }
+        
+        // Start camera
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: {
+                        facingMode: facingMode,
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    },
+                    audio: false
+                });
+                
+                video.srcObject = stream;
+                
+                video.addEventListener('loadeddata', () => {
+                    // Set canvas size to match video
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    
+                    // Start detection loop
+                    detectFaces();
+                });
+                
+                console.log('✅ Camera started');
+            } catch (error) {
+                console.error('❌ Camera error:', error);
+                showError('Camera access denied. Please allow camera permissions.');
+            }
+        }
+        
+        // Detect faces loop
+        async function detectFaces() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                await faceDetection.send({ image: video });
+            }
+            requestAnimationFrame(detectFaces);
+        }
+        
+        // Handle detection results
+        function onResults(results) {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw video frame
+            ctx.save();
+            ctx.scale(-1, 1); // Mirror for drawing
+            ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
+            ctx.restore();
+            
+            // Update status
+            const statusEl = document.getElementById('status');
+            
+            if (results.detections && results.detections.length > 0) {
+                statusEl.textContent = `✅ ${results.detections.length} face(s) detected`;
+                statusEl.classList.add('detecting');
+                
+                detectedFaces = results.detections;
+                
+                // Draw filters on detected faces
+                results.detections.forEach(detection => {
+                    drawFilter(detection);
+                });
+            } else {
+                statusEl.textContent = '🔍 Looking for faces...';
+                statusEl.classList.remove('detecting');
+                detectedFaces = [];
+            }
+        }
+        
+        // Draw filter on face
+        function drawFilter(detection) {
+            const bbox = detection.boundingBox;
+            
+            // Convert normalized coordinates to pixel coordinates
+            const x = bbox.xCenter * canvas.width;
+            const y = bbox.yCenter * canvas.height;
+            const width = bbox.width * canvas.width;
+            const height = bbox.height * canvas.height;
+            
+            // Mirror x coordinate
+            const mirroredX = canvas.width - x;
+            
+            ctx.save();
+            
+            // Draw different filters based on selection
+            switch (currentFilter) {
+                case 'halo':
+                    drawHalo(mirroredX, y - height * 0.7, width * 0.8);
+                    break;
+                case 'crown':
+                    drawCrown(mirroredX, y - height * 0.7, width * 0.9);
+                    break;
+                case 'bunny':
+                    drawBunnyEars(mirroredX, y - height * 0.6, width * 1.2);
+                    break;
+                case 'heart':
+                    drawHearts(mirroredX, y - height * 0.5, width);
+                    break;
+                case 'none':
+                default:
+                    // No filter
+                    break;
+            }
+            
+            ctx.restore();
+        }
+        
+        // Draw halo filter
+        function drawHalo(x, y, size) {
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+            ctx.lineWidth = 8;
+            ctx.beginPath();
+            ctx.arc(x, y, size / 2, 0, Math.PI * 2);
+            ctx.stroke();
+            
+            // Add glow effect
+            ctx.shadowBlur = 20;
+            ctx.shadowColor = '#FFD700';
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+        }
+        
+        // Draw crown filter
+        function drawCrown(x, y, size) {
+            ctx.fillStyle = '#FFD700';
+            ctx.strokeStyle = '#FF6B6B';
+            ctx.lineWidth = 3;
+            
+            const crownHeight = size * 0.4;
+            const crownWidth = size;
+            
+            ctx.beginPath();
+            ctx.moveTo(x - crownWidth / 2, y);
+            ctx.lineTo(x - crownWidth / 3, y - crownHeight);
+            ctx.lineTo(x - crownWidth / 6, y - crownHeight / 2);
+            ctx.lineTo(x, y - crownHeight);
+            ctx.lineTo(x + crownWidth / 6, y - crownHeight / 2);
+            ctx.lineTo(x + crownWidth / 3, y - crownHeight);
+            ctx.lineTo(x + crownWidth / 2, y);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            // Add jewels
+            const jewels = [
+                { x: x - crownWidth / 3, y: y - crownHeight * 0.8 },
+                { x: x, y: y - crownHeight * 0.8 },
+                { x: x + crownWidth / 3, y: y - crownHeight * 0.8 }
+            ];
+            
+            jewels.forEach(jewel => {
+                ctx.fillStyle = '#FF1493';
+                ctx.beginPath();
+                ctx.arc(jewel.x, jewel.y, size * 0.08, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+        
+        // Draw bunny ears filter
+        function drawBunnyEars(x, y, size) {
+            ctx.fillStyle = 'rgba(255, 192, 203, 0.9)';
+            ctx.strokeStyle = 'rgba(255, 105, 180, 0.9)';
+            ctx.lineWidth = 3;
+            
+            const earWidth = size * 0.15;
+            const earHeight = size * 0.5;
+            
+            // Left ear
+            ctx.beginPath();
+            ctx.ellipse(x - size / 3, y, earWidth, earHeight, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Right ear
+            ctx.beginPath();
+            ctx.ellipse(x + size / 3, y, earWidth, earHeight, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+            
+            // Inner ears
+            ctx.fillStyle = 'rgba(255, 182, 193, 0.8)';
+            ctx.beginPath();
+            ctx.ellipse(x - size / 3, y, earWidth * 0.5, earHeight * 0.6, -0.3, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.ellipse(x + size / 3, y, earWidth * 0.5, earHeight * 0.6, 0.3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        // Draw hearts filter
+        function drawHearts(x, y, size) {
+            const hearts = [
+                { x: x - size * 0.6, y: y - size * 0.2, size: size * 0.15, angle: -0.3 },
+                { x: x + size * 0.6, y: y - size * 0.2, size: size * 0.15, angle: 0.3 },
+                { x: x - size * 0.4, y: y + size * 0.4, size: size * 0.12, angle: -0.2 },
+                { x: x + size * 0.4, y: y + size * 0.4, size: size * 0.12, angle: 0.2 }
+            ];
+            
+            hearts.forEach(heart => {
+                drawHeart(heart.x, heart.y, heart.size, heart.angle);
+            });
+        }
+        
+        // Draw single heart
+        function drawHeart(x, y, size, rotation = 0) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(rotation);
+            
+            ctx.fillStyle = 'rgba(255, 20, 147, 0.8)';
+            ctx.strokeStyle = 'rgba(255, 105, 180, 0.9)';
+            ctx.lineWidth = 2;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, size * 0.3);
+            ctx.bezierCurveTo(-size * 0.5, -size * 0.2, -size, size * 0.2, 0, size);
+            ctx.bezierCurveTo(size, size * 0.2, size * 0.5, -size * 0.2, 0, size * 0.3);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Filter buttons
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    console.log('🎨 Filter changed:', currentFilter);
+                });
+            });
+            
+            // Capture button
+            document.getElementById('captureBtn').addEventListener('click', capturePhoto);
+            
+            // Switch camera button
+            document.getElementById('switchCamera').addEventListener('click', switchCamera);
+            
+            // Photo actions
+            document.getElementById('downloadBtn').addEventListener('click', downloadPhoto);
+            document.getElementById('retakeBtn').addEventListener('click', retakePhoto);
+        }
+        
+        // Capture photo
+        function capturePhoto() {
+            const photoImg = document.getElementById('photoImg');
+            photoImg.src = canvas.toDataURL('image/png');
+            document.getElementById('photoPreview').classList.add('show');
+            console.log('📸 Photo captured');
+        }
+        
+        // Download photo
+        function downloadPhoto() {
+            const link = document.createElement('a');
+            link.download = `kitto-selfie-${Date.now()}.png`;
+            link.href = document.getElementById('photoImg').src;
+            link.click();
+            console.log('💾 Photo downloaded');
+        }
+        
+        // Retake photo
+        function retakePhoto() {
+            document.getElementById('photoPreview').classList.remove('show');
+        }
+        
+        // Switch camera
+        async function switchCamera() {
+            facingMode = facingMode === 'user' ? 'environment' : 'user';
+            
+            // Stop current stream
+            const stream = video.srcObject;
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            
+            // Start new stream
+            await startCamera();
+            
+            console.log('🔄 Camera switched to:', facingMode);
+        }
+        
+        // Show error message
+        function showError(message) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error').classList.add('show');
+            
+            setTimeout(() => {
+                document.getElementById('error').classList.remove('show');
+            }, 5000);
+        }
+        
+        console.log('🚀 AR Face Filter Selfie App loaded');
+    </script>
+</body>
+</html>
