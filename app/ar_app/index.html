@@ -6,6 +6,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="lib/aframe.min.js"></script>
     <script src="lib/aframe-ar.js"></script>
+    <script>
+        // Configure A-Frame to use Draco decoder for compressed models
+        if (typeof THREE !== 'undefined' && THREE.DRACOLoader) {
+            THREE.DRACOLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+            console.log('✓ Draco decoder configured');
+        }
+    </script>
     <style>
         * {
             margin: 0;

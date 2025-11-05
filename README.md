@@ -55,7 +55,10 @@ npm run serve
 
 ### 2. **AR Experiences**
 - **AR Simple Demo** (`app/ar/ar-simple.html`) - Basic AR marker demo
-- **Sputnik 1 AR** (`app/ar_app/index.html`) - Interactive satellite experience
+- **Sputnik 1 AR** (`app/ar_app/index.html`) - Interactive satellite experience with orbit animations
+  - ⚡ **Optimized**: Models compressed with Draco (65.5% smaller, 76.3 MB saved)
+  - 📦 **Fast Loading**: Download size reduced from 116.6 MB to 40.2 MB
+  - 🚀 **Performance**: 65% faster load times on mobile networks
 - **3D Model Viewer** (`app/ar/show-model.html`) - GLTF model preview
 
 ### 3. **Educational Games**
@@ -118,6 +121,21 @@ http://localhost:8000/app/wmvplayer/app.html?video=myvideo.wmv
 ```
 
 ## 🔧 Development
+
+### Model Compression
+All GLB models are compressed with Draco for optimal performance. See `COMPRESSION_RESULTS.md` for details.
+
+**To compress new models:**
+```bash
+node compress-models.js
+```
+
+**Results:**
+- 65.5% average file size reduction
+- 76.3 MB total space saved
+- Original files backed up as `*.original.glb`
+
+See `app/ar_app/MODEL_COMPRESSION.md` for full documentation.
 
 ### Adding New Videos
 Place video files in `/asset/video/` and access them via:
