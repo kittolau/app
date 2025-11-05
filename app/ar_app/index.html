@@ -15,6 +15,17 @@
 
         body { margin: 0; overflow: hidden; }
         
+        /* Ensure A-Frame scene is visible */
+        a-scene {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1 !important;
+        }
+        
         /* Loading Splash Screen */
         #loading-splash {
             position: fixed;
@@ -246,78 +257,110 @@
 
         /* Error Panel */
         .error-panel {
-            margin-top: 30px;
-            padding: 25px;
-            background: rgba(239, 68, 68, 0.2);
-            border: 2px solid rgba(239, 68, 68, 0.5);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: 500px;
+            width: 90%;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.3) 0%, rgba(220, 38, 38, 0.2) 100%);
+            border: 2px solid rgba(239, 68, 68, 0.6);
+            border-radius: 20px;
+            -webkit-backdrop-filter: blur(15px);
+            backdrop-filter: blur(15px);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(239, 68, 68, 0.3);
+            z-index: 10000;
             display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-out;
         }
 
         .error-panel.visible {
             display: block;
-            animation: slideDown 0.3s ease-out;
+            opacity: 1;
         }
 
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        /* Error Panel Backdrop */
+        .error-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-out;
+        }
+
+        .error-backdrop.visible {
+            display: block;
+            opacity: 1;
         }
 
         .error-title {
             color: #fbbf24;
-            font-size: 1.1em;
-            font-weight: 600;
+            font-size: 1.3em;
+            font-weight: 700;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            justify-content: center;
+            gap: 10px;
+            text-align: center;
         }
 
         .error-message {
             color: #fecaca;
-            font-size: 0.95em;
-            margin-bottom: 15px;
+            font-size: 1em;
+            margin-bottom: 20px;
             line-height: 1.6;
+            text-align: center;
         }
 
         .failed-models-list {
-            margin: 15px 0;
-            padding: 15px;
-            background: rgba(15, 23, 42, 0.6);
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(239, 68, 68, 0.3);
             border-radius: 12px;
             font-family: 'Courier New', monospace;
             font-size: 0.9em;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .failed-model-item {
             color: #fca5a5;
-            padding: 6px 0;
+            padding: 8px 0;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 8px;
+        }
+
+        .error-buttons {
+            text-align: center;
+            margin-top: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .retry-button {
             background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 12px;
-            font-size: 1em;
+            padding: 14px 35px;
+            border-radius: 14px;
+            font-size: 1.05em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
             box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
-            margin-right: 10px;
         }
 
         .retry-button:hover {
@@ -335,9 +378,9 @@
             background: rgba(100, 116, 139, 0.6);
             color: white;
             border: 2px solid rgba(100, 116, 139, 0.8);
-            padding: 12px 30px;
-            border-radius: 12px;
-            font-size: 1em;
+            padding: 14px 35px;
+            border-radius: 14px;
+            font-size: 1.05em;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.3s;
@@ -351,8 +394,37 @@
         .retry-info {
             color: #cbd5e1;
             font-size: 0.85em;
-            margin-top: 10px;
+            margin-top: 15px;
             font-style: italic;
+            text-align: center;
+        }
+
+        /* Responsive for error panel */
+        @media (max-width: 540px) {
+            .error-panel {
+                width: 95%;
+                padding: 25px 20px;
+            }
+
+            .error-title {
+                font-size: 1.1em;
+            }
+
+            .retry-button,
+            .skip-button {
+                padding: 12px 25px;
+                font-size: 0.95em;
+            }
+
+            .error-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .retry-button,
+            .skip-button {
+                width: 100%;
+            }
         }
 
         /* AR message overlay */
@@ -525,6 +597,9 @@
     </style>
 </head>
 <body>
+    <!-- Error Backdrop -->
+    <div class="error-backdrop" id="error-backdrop"></div>
+
     <!-- Loading Splash Screen -->
     <div id="loading-splash">
         <div class="loading-stars" id="loading-stars"></div>
@@ -559,7 +634,7 @@
                     以下模型無法載入。您可以選擇重試或跳過這些模型繼續使用其他功能。
                 </div>
                 <div class="failed-models-list" id="failed-models-list"></div>
-                <div style="text-align: center; margin-top: 15px;">
+                <div class="error-buttons">
                     <button class="retry-button" id="retry-button" onclick="retryFailedModels()">
                         🔄 重試載入
                     </button>
@@ -704,28 +779,68 @@
                 badge.textContent = '✓ ' + modelName;
             }
         }
+        
+        // Format file size to human readable format
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+            if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+            return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+        }
 
         // Hide loading splash
         function hideLoadingSplash() {
             var splash = document.getElementById('loading-splash');
+            var scene = document.querySelector('a-scene');
+            
+            console.log('🎬 Starting AR experience...');
+            
             if (splash) {
-                updateLoadingProgress(100, '準備完成', '啟動 AR 體驗...');
+                // Ensure scene is visible
+                if (scene) {
+                    scene.style.display = 'block';
+                    scene.style.visibility = 'visible';
+                }
+                
+                // Final check and log video status
+                var video = document.querySelector('video');
+                if (video) {
+                    console.log('📹 Final video check - Dimensions:', video.videoWidth, 'x', video.videoHeight);
+                    console.log('📹 Video ready state:', video.readyState);
+                    console.log('📹 Video paused:', video.paused);
+                } else {
+                    console.warn('⚠️ No video element when hiding splash');
+                }
+                
+                // Hide splash with animation
+                splash.classList.add('hidden');
                 setTimeout(function() {
-                    splash.classList.add('hidden');
-                    setTimeout(function() {
-                        splash.style.display = 'none';
-                    }, 500);
-                }, 800);
+                    splash.style.display = 'none';
+                    console.log('✓ Loading splash hidden, AR experience started');
+                }, 500);
             }
         }
 
         // Show error panel for failed models
         function showErrorPanel() {
             var errorPanel = document.getElementById('error-panel');
+            var errorBackdrop = document.getElementById('error-backdrop');
             var failedModelsList = document.getElementById('failed-models-list');
             var retryInfo = document.getElementById('retry-info');
+            var retryButton = document.getElementById('retry-button');
+            var skipButton = document.getElementById('skip-button');
             
-            if (!errorPanel || !failedModelsList) return;
+            if (!errorPanel || !failedModelsList) {
+                console.error('Error panel elements not found');
+                return;
+            }
+            
+            console.log('📢 Showing error panel for failed models:', loadingProgress.failedModels);
+            
+            // Re-enable buttons
+            if (retryButton) retryButton.disabled = false;
+            if (skipButton) skipButton.disabled = false;
             
             // Clear previous content
             failedModelsList.innerHTML = '';
@@ -744,15 +859,47 @@
                 retryInfo.textContent = '提示: 每個模型最多重試 ' + MAX_RETRIES + ' 次，超時時間為 ' + (TIMEOUT_MS / 1000) + ' 秒';
             }
             
-            // Show panel
-            errorPanel.classList.add('visible');
+            // Show backdrop first
+            if (errorBackdrop) {
+                errorBackdrop.style.display = 'block';
+                setTimeout(function() {
+                    errorBackdrop.classList.add('visible');
+                }, 10);
+            }
+            
+            // Then show panel with animation
+            errorPanel.style.display = 'block';
+            setTimeout(function() {
+                errorPanel.classList.add('visible');
+            }, 10);
+            
+            console.log('✓ Error panel displayed');
+        }
+
+        // Hide error panel
+        function hideErrorPanel() {
+            var errorPanel = document.getElementById('error-panel');
+            var errorBackdrop = document.getElementById('error-backdrop');
+            
+            if (errorPanel) {
+                errorPanel.classList.remove('visible');
+                setTimeout(function() {
+                    errorPanel.style.display = 'none';
+                }, 400);
+            }
+            
+            if (errorBackdrop) {
+                errorBackdrop.classList.remove('visible');
+                setTimeout(function() {
+                    errorBackdrop.style.display = 'none';
+                }, 400);
+            }
         }
 
         // Retry failed models
         function retryFailedModels() {
             var retryButton = document.getElementById('retry-button');
             var skipButton = document.getElementById('skip-button');
-            var errorPanel = document.getElementById('error-panel');
             
             if (retryButton) retryButton.disabled = true;
             if (skipButton) skipButton.disabled = true;
@@ -762,6 +909,10 @@
             var failedModelsToRetry = loadingProgress.failedModels.slice();
             loadingProgress.failedModels = [];
             
+            // Reset loaded counter for accurate progress
+            loadingProgress.loaded = 0;
+            loadingProgress.total = failedModelsToRetry.length;
+            
             var retryPromises = failedModelsToRetry.map(function(modelName, index) {
                 return loadModelConfig(modelName, index);
             });
@@ -769,10 +920,11 @@
             Promise.all(retryPromises).then(function() {
                 if (loadingProgress.failedModels.length === 0) {
                     // All succeeded
-                    if (errorPanel) errorPanel.classList.remove('visible');
-                    updateLoadingProgress(70, '重試成功', '初始化 AR 場景...');
+                    hideErrorPanel();
+                    updateLoadingProgress(70, '重試成功', '所有模型已載入，初始化 AR 場景...');
+                    
+                    // Reinitialize the scene with all models
                     initializeARScene();
-                    setTimeout(hideLoadingSplash, 1000);
                 } else {
                     // Some still failed
                     if (retryButton) retryButton.disabled = false;
@@ -785,8 +937,7 @@
 
         // Skip failed models and continue
         function skipFailedModels() {
-            var errorPanel = document.getElementById('error-panel');
-            if (errorPanel) errorPanel.classList.remove('visible');
+            hideErrorPanel();
             
             console.warn('⚠️ Skipping failed models:', loadingProgress.failedModels);
             updateLoadingProgress(70, '跳過失敗的模型', '繼續初始化 AR 場景...');
@@ -796,8 +947,9 @@
                 return loadingProgress.failedModels.indexOf(name) === -1;
             });
             
+            console.log('✓ Available models after skipping:', availableModels);
+            
             initializeARScene();
-            setTimeout(hideLoadingSplash, 1000);
         }
 
         // Fetch with timeout
@@ -869,19 +1021,21 @@
                 console.log('✓ All model configurations cached');
                 console.log('Available models:', Object.keys(modelConfigs));
                 
-                updateLoadingProgress(70, '配置完成', '初始化 AR 場景...');
-                
-                // Initialize AR scene with all markers
-                initializeARScene();
-                
-                // Wait a bit for scene to initialize, then hide splash
-                setTimeout(function() {
-                    hideLoadingSplash();
-                }, 1000);
+                // Check if there are any failed models
+                if (loadingProgress.failedModels.length > 0) {
+                    console.warn('⚠️ Some models failed to load:', loadingProgress.failedModels);
+                    updateLoadingProgress(60, '部分模型載入失敗', loadingProgress.failedModels.length + ' 個模型無法載入');
+                    showErrorPanel();
+                    // Don't proceed automatically - wait for user decision
+                } else {
+                    // All models loaded successfully
+                    updateLoadingProgress(70, '配置完成', '初始化 AR 場景...');
+                    initializeARScene();
+                }
             })
             .catch(function(error) {
                 console.error('⚠️ Failed to load model configurations:', error);
-                updateLoadingProgress(50, '載入失敗', '使用預設配置...');
+                updateLoadingProgress(50, '載入失敗', '發生錯誤...');
                 
                 // Check if we have any failed models to show error panel
                 if (loadingProgress.failedModels.length > 0) {
@@ -1031,6 +1185,9 @@
         
         // Initialize AR scene with multiple markers
         function initializeARScene() {
+            console.log('🎬 Initializing AR scene with models:', availableModels);
+            updateLoadingProgress(75, '初始化 AR 場景', '設置標記和模型...');
+            
             var scene = document.getElementById('ar-scene');
             if (!scene) {
                 console.error('AR scene not found');
@@ -1048,6 +1205,187 @@
             });
             
             console.log('✓ AR scene initialized with', availableModels.length, 'markers');
+            
+            // Wait for all assets to be loaded before proceeding
+            waitForAssetsToLoad();
+        }
+        
+        // Wait for all assets (models, textures, etc.) to be fully loaded
+        function waitForAssetsToLoad() {
+            console.log('⏳ Waiting for all 3D assets to load and cache...');
+            updateLoadingProgress(80, '載入 3D 模型資源', '下載模型文件和紋理...');
+            
+            var scene = document.querySelector('a-scene');
+            if (!scene) {
+                console.error('Scene not found');
+                hideLoadingSplash();
+                return;
+            }
+            
+            // Ensure scene is visible and rendering
+            scene.style.display = 'block';
+            scene.style.visibility = 'visible';
+            
+            // Track asset loading
+            var assetsLoaded = false;
+            var modelsLoaded = 0;
+            var totalDownloadSize = 0;
+            var modelSizes = {};
+            
+            // Count total models to load
+            var totalModels = 0;
+            var modelEntities = document.querySelectorAll('[gltf-model]');
+            totalModels = modelEntities.length;
+            
+            console.log('📦 Total assets to load:', totalModels);
+            
+            if (totalModels === 0) {
+                console.warn('⚠️ No GLTF models found, proceeding...');
+                onAllAssetsLoaded();
+                return;
+            }
+            
+            // Fetch file sizes for all models
+            var sizeFetchPromises = [];
+            modelEntities.forEach(function(entity) {
+                var modelPath = entity.getAttribute('gltf-model');
+                if (modelPath) {
+                    var promise = fetch(modelPath, { method: 'HEAD' })
+                        .then(function(response) {
+                            var size = response.headers.get('Content-Length');
+                            if (size) {
+                                modelSizes[modelPath] = parseInt(size);
+                                totalDownloadSize += parseInt(size);
+                                console.log('📊 Model size:', modelPath, '-', formatFileSize(parseInt(size)));
+                            }
+                        })
+                        .catch(function(err) {
+                            console.warn('Could not fetch size for:', modelPath);
+                        });
+                    sizeFetchPromises.push(promise);
+                }
+            });
+            
+            // Wait for all size fetches to complete
+            Promise.all(sizeFetchPromises).then(function() {
+                console.log('📊 Total download size:', formatFileSize(totalDownloadSize));
+            });
+            
+            function onModelLoaded(evt) {
+                modelsLoaded++;
+                var modelPath = evt.target.getAttribute('gltf-model');
+                var modelSize = modelSizes[modelPath] || 0;
+                var progress = 80 + Math.floor((modelsLoaded / totalModels) * 15);
+                
+                var sizeText = modelSize > 0 ? ' (' + formatFileSize(modelSize) + ')' : '';
+                var totalSizeText = totalDownloadSize > 0 ? ' - 總計: ' + formatFileSize(totalDownloadSize) : '';
+                
+                updateLoadingProgress(
+                    progress, 
+                    '載入 3D 模型', 
+                    modelsLoaded + ' / ' + totalModels + ' 模型已下載' + sizeText + totalSizeText
+                );
+                console.log('✓ Model loaded and cached (' + modelsLoaded + '/' + totalModels + '):', modelPath, sizeText);
+                
+                if (modelsLoaded >= totalModels && !assetsLoaded) {
+                    assetsLoaded = true;
+                    onAllAssetsLoaded();
+                }
+            }
+            
+            function onModelError(evt) {
+                console.error('❌ Model failed to load:', evt.target.getAttribute('gltf-model'));
+                modelsLoaded++;
+                
+                var progress = 80 + Math.floor((modelsLoaded / totalModels) * 15);
+                updateLoadingProgress(
+                    progress, 
+                    '載入 3D 模型', 
+                    modelsLoaded + ' / ' + totalModels + ' (部分失敗)'
+                );
+                
+                if (modelsLoaded >= totalModels && !assetsLoaded) {
+                    assetsLoaded = true;
+                    onAllAssetsLoaded();
+                }
+            }
+            
+            // Attach listeners to all model entities
+            modelEntities.forEach(function(entity) {
+                entity.addEventListener('model-loaded', onModelLoaded);
+                entity.addEventListener('model-error', onModelError);
+            });
+            
+            // Fallback timeout (30 seconds)
+            var fallbackTimeout = setTimeout(function() {
+                if (!assetsLoaded) {
+                    console.warn('⚠️ Asset loading timeout after 30s, proceeding anyway (loaded ' + modelsLoaded + '/' + totalModels + ')');
+                    assetsLoaded = true;
+                    onAllAssetsLoaded();
+                }
+            }, 30000);
+            
+            function onAllAssetsLoaded() {
+                clearTimeout(fallbackTimeout);
+                console.log('✅ All assets loaded and cached in browser');
+                updateLoadingProgress(100, '完成', '所有資源已載入，準備進入 AR 體驗...');
+                
+                // Wait for AR.js to initialize camera before hiding splash
+                waitForCameraReady();
+            }
+        }
+        
+        // Wait for AR.js camera/webcam to be ready
+        function waitForCameraReady() {
+            console.log('📹 Waiting for AR.js to initialize camera...');
+            var scene = document.querySelector('a-scene');
+            
+            if (!scene) {
+                console.error('Scene not found');
+                hideLoadingSplash();
+                return;
+            }
+            
+            var maxWaitTime = 10000; // 10 seconds max
+            var startTime = Date.now();
+            var checkInterval;
+            
+            function checkCamera() {
+                var video = document.querySelector('video');
+                var elapsed = Date.now() - startTime;
+                
+                if (video && video.videoWidth > 0 && video.videoHeight > 0) {
+                    // Camera is ready with valid dimensions
+                    console.log('✅ Camera ready! Dimensions:', video.videoWidth, 'x', video.videoHeight);
+                    clearInterval(checkInterval);
+                    hideLoadingSplash();
+                } else if (elapsed > maxWaitTime) {
+                    // Timeout - proceed anyway
+                    console.warn('⚠️ Camera initialization timeout after', (elapsed/1000).toFixed(1), 'seconds');
+                    if (video) {
+                        console.log('Video element exists but dimensions:', video.videoWidth, 'x', video.videoHeight);
+                    } else {
+                        console.log('No video element found');
+                    }
+                    clearInterval(checkInterval);
+                    hideLoadingSplash();
+                } else {
+                    // Still waiting
+                    if (elapsed % 1000 < 200) { // Log every second
+                        console.log('⏳ Waiting for camera... (' + (elapsed/1000).toFixed(1) + 's)');
+                    }
+                }
+            }
+            
+            // Check every 200ms
+            checkInterval = setInterval(checkCamera, 200);
+            
+            // Also listen for AR.js events
+            scene.addEventListener('arjs-video-loaded', function() {
+                console.log('✅ AR.js video-loaded event fired');
+                clearInterval(checkInterval);
+                setTimeout(hideLoadingSplash, 500);
+            });
         }
         
         // Create a marker and model for a specific model
