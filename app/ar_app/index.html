@@ -7,8 +7,354 @@
     <script src="lib/aframe.min.js"></script>
     <script src="lib/aframe-ar.js"></script>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body { margin: 0; overflow: hidden; }
         
+        /* Loading Splash Screen */
+        #loading-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at bottom, #1e3a8a 0%, #0a0e27 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #loading-splash.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Animated Stars Background */
+        .loading-stars {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .loading-star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle linear infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Loading Content */
+        .loading-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 500px;
+            padding: 40px 20px;
+        }
+
+        .loading-icon {
+            font-size: 100px;
+            margin-bottom: 30px;
+            animation: rocket-float 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.6));
+        }
+
+        @keyframes rocket-float {
+            0%, 100% {
+                transform: translateY(0) rotate(-10deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(-10deg);
+            }
+        }
+
+        .loading-title {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #06b6d4 0%, #7c3aed 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+        }
+
+        .loading-subtitle {
+            color: #93c5fd;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        /* Progress Bar Container */
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 25px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(124, 58, 237, 0.3);
+            border-radius: 50px;
+            padding: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(124, 58, 237, 0.1) 50%, transparent 70%);
+            animation: shine 3s linear infinite;
+        }
+
+        @keyframes shine {
+            0% {
+                transform: translateX(-100%) translateY(-100%) rotate(45deg);
+            }
+            100% {
+                transform: translateX(100%) translateY(100%) rotate(45deg);
+            }
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #7c3aed 0%, #ec4899 50%, #06b6d4 100%);
+            border-radius: 40px;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-text {
+            color: #e0e7ff;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .progress-percentage {
+            color: #fbbf24;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        /* Loading Status */
+        .loading-status {
+            color: #cbd5e1;
+            font-size: 0.95em;
+            min-height: 24px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(124, 58, 237, 0.3);
+            border-top-color: #7c3aed;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Model List Info */
+        .models-info {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(30, 58, 138, 0.3);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+        }
+
+        .models-info-title {
+            color: #fbbf24;
+            font-size: 1em;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .models-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .model-badge {
+            background: rgba(124, 58, 237, 0.4);
+            border: 1px solid rgba(124, 58, 237, 0.6);
+            border-radius: 20px;
+            padding: 6px 16px;
+            color: #e0e7ff;
+            font-size: 0.85em;
+            font-weight: 500;
+        }
+
+        .model-badge.loaded {
+            background: rgba(16, 185, 129, 0.4);
+            border-color: rgba(16, 185, 129, 0.6);
+            color: #10b981;
+        }
+
+        .model-badge.failed {
+            background: rgba(239, 68, 68, 0.4);
+            border-color: rgba(239, 68, 68, 0.6);
+            color: #ef4444;
+        }
+
+        /* Error Panel */
+        .error-panel {
+            margin-top: 30px;
+            padding: 25px;
+            background: rgba(239, 68, 68, 0.2);
+            border: 2px solid rgba(239, 68, 68, 0.5);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .error-panel.visible {
+            display: block;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-title {
+            color: #fbbf24;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .error-message {
+            color: #fecaca;
+            font-size: 0.95em;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+
+        .failed-models-list {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+
+        .failed-model-item {
+            color: #fca5a5;
+            padding: 6px 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .retry-button {
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            margin-right: 10px;
+        }
+
+        .retry-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+        }
+
+        .retry-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .skip-button {
+            background: rgba(100, 116, 139, 0.6);
+            color: white;
+            border: 2px solid rgba(100, 116, 139, 0.8);
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .skip-button:hover {
+            background: rgba(100, 116, 139, 0.8);
+            transform: translateY(-2px);
+        }
+
+        .retry-info {
+            color: #cbd5e1;
+            font-size: 0.85em;
+            margin-top: 10px;
+            font-style: italic;
+        }
+
         /* AR message overlay */
         #ar-hover-message {
             position: fixed;
@@ -159,10 +505,74 @@
                 font-size: 0.85em;
                 padding: 10px 16px;
             }
+
+            .loading-title {
+                font-size: 2em;
+            }
+
+            .loading-icon {
+                font-size: 80px;
+            }
+
+            .progress-container {
+                max-width: 90%;
+            }
+
+            .loading-content {
+                padding: 20px 15px;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Loading Splash Screen -->
+    <div id="loading-splash">
+        <div class="loading-stars" id="loading-stars"></div>
+        <div class="loading-content">
+            <div class="loading-icon">🚀</div>
+            <div class="loading-title">AR Viewer</div>
+            <div class="loading-subtitle">正在準備 AR 體驗</div>
+            
+            <div class="progress-percentage" id="progress-percentage">0%</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="progress-text">
+                <span id="progress-text">初始化中...</span>
+            </div>
+            
+            <div class="loading-status">
+                <span class="loading-spinner"></span>
+                <span id="loading-status">載入配置檔案...</span>
+            </div>
+
+            <div class="models-info" id="models-info" style="display: none;">
+                <div class="models-info-title">🛰️ 載入模型</div>
+                <div class="models-list" id="models-list"></div>
+            </div>
+
+            <div class="error-panel" id="error-panel">
+                <div class="error-title">⚠️ 部分模型載入失敗</div>
+                <div class="error-message">
+                    以下模型無法載入。您可以選擇重試或跳過這些模型繼續使用其他功能。
+                </div>
+                <div class="failed-models-list" id="failed-models-list"></div>
+                <div style="text-align: center; margin-top: 15px;">
+                    <button class="retry-button" id="retry-button" onclick="retryFailedModels()">
+                        🔄 重試載入
+                    </button>
+                    <button class="skip-button" id="skip-button" onclick="skipFailedModels()">
+                        ⏭️ 跳過繼續
+                    </button>
+                </div>
+                <div class="retry-info" id="retry-info"></div>
+            </div>
+        </div>
+    </div>
+    
+
     <!-- Instructions for users -->
     <div id="instructions">
         請將相機對準AR標記以查看
@@ -209,7 +619,208 @@
         var speechSynthesis = window.speechSynthesis;
         var currentUtterance = null;
         
+        // Loading progress tracking
+        var loadingProgress = {
+            total: 0,
+            loaded: 0,
+            currentTask: '',
+            modelsLoaded: {},
+            failedModels: [],
+            retryCount: {}
+        };
+
+        var MAX_RETRIES = 3;
+        var TIMEOUT_MS = 10000; // 10 seconds
+        
         console.log('=== AR Viewer (Multi-Marker & NFT Support) ===');
+
+        // Generate loading screen stars
+        function createLoadingStars() {
+            var starsContainer = document.getElementById('loading-stars');
+            if (!starsContainer) return;
+            
+            var starCount = 100;
+            for (var i = 0; i < starCount; i++) {
+                var star = document.createElement('div');
+                star.className = 'loading-star';
+                
+                var size = Math.random() * 3 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                star.style.animationDelay = Math.random() * 3 + 's';
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Update loading progress UI
+        function updateLoadingProgress(percentage, task, status) {
+            var progressBar = document.getElementById('progress-bar');
+            var progressPercentage = document.getElementById('progress-percentage');
+            var progressText = document.getElementById('progress-text');
+            var loadingStatus = document.getElementById('loading-status');
+            
+            if (progressBar) {
+                progressBar.style.width = percentage + '%';
+            }
+            if (progressPercentage) {
+                progressPercentage.textContent = Math.round(percentage) + '%';
+            }
+            if (progressText && task) {
+                progressText.textContent = task;
+            }
+            if (loadingStatus && status) {
+                loadingStatus.textContent = status;
+            }
+        }
+
+        // Update model badges
+        function updateModelBadges(modelName, loaded) {
+            var modelsInfo = document.getElementById('models-info');
+            var modelsList = document.getElementById('models-list');
+            
+            if (!modelsInfo || !modelsList) return;
+            
+            // Show models info section
+            modelsInfo.style.display = 'block';
+            
+            // Find or create badge
+            var badgeId = 'badge-' + modelName;
+            var badge = document.getElementById(badgeId);
+            
+            if (!badge) {
+                badge = document.createElement('div');
+                badge.className = 'model-badge';
+                badge.id = badgeId;
+                badge.textContent = modelName;
+                modelsList.appendChild(badge);
+            }
+            
+            if (loaded) {
+                badge.classList.add('loaded');
+                badge.textContent = '✓ ' + modelName;
+            }
+        }
+
+        // Hide loading splash
+        function hideLoadingSplash() {
+            var splash = document.getElementById('loading-splash');
+            if (splash) {
+                updateLoadingProgress(100, '準備完成', '啟動 AR 體驗...');
+                setTimeout(function() {
+                    splash.classList.add('hidden');
+                    setTimeout(function() {
+                        splash.style.display = 'none';
+                    }, 500);
+                }, 800);
+            }
+        }
+
+        // Show error panel for failed models
+        function showErrorPanel() {
+            var errorPanel = document.getElementById('error-panel');
+            var failedModelsList = document.getElementById('failed-models-list');
+            var retryInfo = document.getElementById('retry-info');
+            
+            if (!errorPanel || !failedModelsList) return;
+            
+            // Clear previous content
+            failedModelsList.innerHTML = '';
+            
+            // Add failed models to list
+            loadingProgress.failedModels.forEach(function(modelName) {
+                var retryCount = loadingProgress.retryCount[modelName] || 0;
+                var item = document.createElement('div');
+                item.className = 'failed-model-item';
+                item.innerHTML = '❌ <strong>' + modelName + '</strong> (已重試 ' + retryCount + ' 次)';
+                failedModelsList.appendChild(item);
+            });
+            
+            // Update retry info
+            if (retryInfo) {
+                retryInfo.textContent = '提示: 每個模型最多重試 ' + MAX_RETRIES + ' 次，超時時間為 ' + (TIMEOUT_MS / 1000) + ' 秒';
+            }
+            
+            // Show panel
+            errorPanel.classList.add('visible');
+        }
+
+        // Retry failed models
+        function retryFailedModels() {
+            var retryButton = document.getElementById('retry-button');
+            var skipButton = document.getElementById('skip-button');
+            var errorPanel = document.getElementById('error-panel');
+            
+            if (retryButton) retryButton.disabled = true;
+            if (skipButton) skipButton.disabled = true;
+            
+            updateLoadingProgress(10, '重試載入失敗的模型...', '準備重新下載...');
+            
+            var failedModelsToRetry = loadingProgress.failedModels.slice();
+            loadingProgress.failedModels = [];
+            
+            var retryPromises = failedModelsToRetry.map(function(modelName, index) {
+                return loadModelConfig(modelName, index);
+            });
+            
+            Promise.all(retryPromises).then(function() {
+                if (loadingProgress.failedModels.length === 0) {
+                    // All succeeded
+                    if (errorPanel) errorPanel.classList.remove('visible');
+                    updateLoadingProgress(70, '重試成功', '初始化 AR 場景...');
+                    initializeARScene();
+                    setTimeout(hideLoadingSplash, 1000);
+                } else {
+                    // Some still failed
+                    if (retryButton) retryButton.disabled = false;
+                    if (skipButton) skipButton.disabled = false;
+                    showErrorPanel();
+                    updateLoadingProgress(50, '部分模型仍然失敗', loadingProgress.failedModels.length + ' 個模型無法載入');
+                }
+            });
+        }
+
+        // Skip failed models and continue
+        function skipFailedModels() {
+            var errorPanel = document.getElementById('error-panel');
+            if (errorPanel) errorPanel.classList.remove('visible');
+            
+            console.warn('⚠️ Skipping failed models:', loadingProgress.failedModels);
+            updateLoadingProgress(70, '跳過失敗的模型', '繼續初始化 AR 場景...');
+            
+            // Remove failed models from available list
+            availableModels = availableModels.filter(function(name) {
+                return loadingProgress.failedModels.indexOf(name) === -1;
+            });
+            
+            initializeARScene();
+            setTimeout(hideLoadingSplash, 1000);
+        }
+
+        // Fetch with timeout
+        function fetchWithTimeout(url, timeout) {
+            return new Promise(function(resolve, reject) {
+                var timeoutId = setTimeout(function() {
+                    reject(new Error('請求超時 (timeout after ' + (timeout / 1000) + 's)'));
+                }, timeout);
+                
+                fetch(url)
+                    .then(function(response) {
+                        clearTimeout(timeoutId);
+                        resolve(response);
+                    })
+                    .catch(function(error) {
+                        clearTimeout(timeoutId);
+                        reject(error);
+                    });
+            });
+        }
+
+        // Initialize loading screen
+        createLoadingStars();
         
         // Function to setup orbit animation
         function setupOrbitAnimation(orbitContainer, speed) {
@@ -233,6 +844,8 @@
         }
         
         // Load model list and cache all configurations
+        updateLoadingProgress(5, '載入中...', '讀取模型列表...');
+        
         fetch('model/model_list.json')
             .then(function(response) {
                 if (!response.ok) {
@@ -243,31 +856,68 @@
             .then(function(data) {
                 console.log('✓ Model list loaded:', data);
                 availableModels = data.models || [];
+                loadingProgress.total = availableModels.length;
+                
+                updateLoadingProgress(10, '模型列表已載入', '找到 ' + availableModels.length + ' 個模型');
                 
                 // Load and cache all model configurations
-                return Promise.all(availableModels.map(function(modelName) {
-                    return loadModelConfig(modelName);
+                return Promise.all(availableModels.map(function(modelName, index) {
+                    return loadModelConfig(modelName, index);
                 }));
             })
             .then(function() {
                 console.log('✓ All model configurations cached');
                 console.log('Available models:', Object.keys(modelConfigs));
                 
+                updateLoadingProgress(70, '配置完成', '初始化 AR 場景...');
+                
                 // Initialize AR scene with all markers
                 initializeARScene();
+                
+                // Wait a bit for scene to initialize, then hide splash
+                setTimeout(function() {
+                    hideLoadingSplash();
+                }, 1000);
             })
             .catch(function(error) {
                 console.error('⚠️ Failed to load model configurations:', error);
-                // Fallback to single model mode
-                initializeFallbackMode();
+                updateLoadingProgress(50, '載入失敗', '使用預設配置...');
+                
+                // Check if we have any failed models to show error panel
+                if (loadingProgress.failedModels.length > 0) {
+                    showErrorPanel();
+                } else {
+                    // Fallback to single model mode
+                    initializeFallbackMode();
+                    setTimeout(function() {
+                        hideLoadingSplash();
+                    }, 1000);
+                }
             });
         
         // Load configuration for a specific model
-        function loadModelConfig(modelName) {
-            return fetch('model/' + modelName + '/config.json')
+        function loadModelConfig(modelName, index) {
+            // Initialize retry count if not exists
+            if (!loadingProgress.retryCount[modelName]) {
+                loadingProgress.retryCount[modelName] = 0;
+            }
+            
+            // Update progress for this model
+            var currentProgress = 10 + (index / loadingProgress.total) * 50;
+            var attemptText = loadingProgress.retryCount[modelName] > 0 
+                ? ' (重試 ' + loadingProgress.retryCount[modelName] + '/' + MAX_RETRIES + ')' 
+                : '';
+            updateLoadingProgress(
+                currentProgress, 
+                '載入模型配置...', 
+                '正在處理: ' + modelName + attemptText
+            );
+            updateModelBadges(modelName, false);
+            
+            return fetchWithTimeout('model/' + modelName + '/config.json', TIMEOUT_MS)
                 .then(function(response) {
                     if (!response.ok) {
-                        throw new Error('Config not found for ' + modelName);
+                        throw new Error('HTTP error! status: ' + response.status);
                     }
                     return response.json();
                 })
@@ -310,17 +960,72 @@
                     };
                     
                     console.log('✓ Cached config for:', modelName, '(Type:', data.marker_type || 'pattern', ', Model:', data.model_file || 'model.gltf', ')');
+                    
+                    // Update loading progress
+                    loadingProgress.loaded++;
+                    loadingProgress.modelsLoaded[modelName] = true;
+                    
+                    // Remove from failed list if it was there
+                    var failedIndex = loadingProgress.failedModels.indexOf(modelName);
+                    if (failedIndex > -1) {
+                        loadingProgress.failedModels.splice(failedIndex, 1);
+                    }
+                    
+                    var loadedProgress = 10 + (loadingProgress.loaded / loadingProgress.total) * 60;
+                    updateLoadingProgress(
+                        loadedProgress,
+                        '已載入 ' + loadingProgress.loaded + '/' + loadingProgress.total + ' 個模型',
+                        '✓ ' + modelName + ' 配置完成'
+                    );
+                    updateModelBadges(modelName, true);
                 })
                 .catch(function(error) {
                     console.error('⚠️ Failed to load config for', modelName, ':', error);
-                    // Set default config for failed models
-                    modelConfigs[modelName] = {
-                        size: 0.3, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0
-                    };
-                    modelDescriptions[modelName] = {
-                        title: modelName,
-                        hk_narrative: 'AR Model'
-                    };
+                    loadingProgress.retryCount[modelName]++;
+                    
+                    // Check if we should retry
+                    if (loadingProgress.retryCount[modelName] < MAX_RETRIES) {
+                        console.log('🔄 Retrying', modelName, '(attempt', loadingProgress.retryCount[modelName] + 1, 'of', MAX_RETRIES + ')');
+                        // Retry with a small delay
+                        return new Promise(function(resolve) {
+                            setTimeout(function() {
+                                resolve(loadModelConfig(modelName, index));
+                            }, 1000);
+                        });
+                    } else {
+                        // Max retries reached, mark as failed
+                        console.error('❌ Max retries reached for', modelName);
+                        loadingProgress.loaded++;
+                        
+                        // Add to failed models list if not already there
+                        if (loadingProgress.failedModels.indexOf(modelName) === -1) {
+                            loadingProgress.failedModels.push(modelName);
+                        }
+                        
+                        updateLoadingProgress(
+                            10 + (loadingProgress.loaded / loadingProgress.total) * 60,
+                            '已處理 ' + loadingProgress.loaded + '/' + loadingProgress.total + ' 個模型',
+                            '❌ ' + modelName + ' 載入失敗 (已重試 ' + MAX_RETRIES + ' 次)'
+                        );
+                        updateModelBadges(modelName, false);
+                        
+                        // Mark badge as failed
+                        var badge = document.getElementById('badge-' + modelName);
+                        if (badge) {
+                            badge.classList.add('failed');
+                            badge.textContent = '❌ ' + modelName;
+                        }
+                        
+                        // Set default config for failed models
+                        // Set default config for failed models
+                        modelConfigs[modelName] = {
+                            size: 0.3, posX: 0, posY: 0, posZ: 0, rotX: 0, rotY: 0, rotZ: 0
+                        };
+                        modelDescriptions[modelName] = {
+                            title: modelName,
+                            hk_narrative: 'AR Model'
+                        };
+                    }
                 });
         }
         
@@ -349,7 +1054,13 @@
         function createMarkerForModel(scene, modelName) {
             var config = modelConfigs[modelName];
             if (!config) {
-                console.warn('No config found for:', modelName);
+                console.warn('No config found for:', modelName, '- skipping marker creation');
+                return;
+            }
+            
+            // Skip if this model failed to load
+            if (loadingProgress.failedModels.indexOf(modelName) > -1) {
+                console.warn('Skipping failed model:', modelName);
                 return;
             }
             
