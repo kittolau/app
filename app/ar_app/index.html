@@ -211,6 +211,27 @@
         
         console.log('=== AR Viewer (Multi-Marker & NFT Support) ===');
         
+        // Function to setup orbit animation
+        function setupOrbitAnimation(orbitContainer, speed) {
+            var currentAngle = 0;
+            var rotationSpeed = speed * 0.5; // Adjust speed multiplier
+            
+            // Animation loop
+            function animate() {
+                if (orbitContainer && orbitContainer.object3D) {
+                    currentAngle += rotationSpeed;
+                    if (currentAngle >= 360) {
+                        currentAngle -= 360;
+                    }
+                    orbitContainer.object3D.rotation.y = currentAngle * Math.PI / 180;
+                }
+                requestAnimationFrame(animate);
+            }
+            
+            // Start animation
+            animate();
+        }
+        
         // Load model list and cache all configurations
         fetch('model/model_list.json')
             .then(function(response) {
@@ -262,7 +283,22 @@
                         rotZ: data.rotation ? data.rotation.z || 0 : 0,
                         markerType: data.marker_type || 'pattern', // 'pattern', 'nft', or 'barcode'
                         nftDescriptor: data.nft_descriptor || null, // Path to NFT descriptor files (without extension)
-                        modelFile: data.model_file || 'model.gltf' // Support both .gltf and .glb files
+                        modelFile: data.model_file || 'model.gltf', // Support both .gltf and .glb files
+                        // Orbit animation settings
+                        spinAroundEarth: data.spin_around_earth_orbit || false,
+                        earth: data.earth ? {
+                            modelFile: data.earth.model_file || null,
+                            size: data.earth.size || 0.5,
+                            posX: data.earth.position ? data.earth.position.x || 0 : 0,
+                            posY: data.earth.position ? data.earth.position.y || 0 : 0,
+                            posZ: data.earth.position ? data.earth.position.z || 0 : 0,
+                            rotX: data.earth.rotation ? data.earth.rotation.x || 0 : 0,
+                            rotY: data.earth.rotation ? data.earth.rotation.y || 0 : 0,
+                            rotZ: data.earth.rotation ? data.earth.rotation.z || 0 : 0
+                        } : null,
+                        orbitRadius: data.orbit_radius || 2,
+                        orbitSpeed: data.orbit_speed || 1,
+                        orbitTilt: data.orbit_tilt || 0
                     };
                     
                     // Cache description info
@@ -348,23 +384,61 @@
             marker.setAttribute('id', 'marker-' + modelName);
             marker.setAttribute('raycaster', 'objects: .clickable');
             
-            // Create model entity
-            var modelEntity = document.createElement('a-entity');
-            modelEntity.setAttribute('id', 'model-' + modelName);
-            
-            // Support both .gltf and .glb files
-            var modelFile = config.modelFile || 'model.gltf';
-            modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + modelFile);
-            
-            // Apply cached configuration
-            if (config) {
+            // Check if this model should orbit around Earth
+            if (config.spinAroundEarth && config.earth && config.earth.modelFile) {
+                // Create Earth model at center
+                var earthEntity = document.createElement('a-entity');
+                earthEntity.setAttribute('id', 'earth-' + modelName);
+                earthEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + config.earth.modelFile);
+                earthEntity.setAttribute('scale', config.earth.size + ' ' + config.earth.size + ' ' + config.earth.size);
+                earthEntity.setAttribute('position', config.earth.posX + ' ' + config.earth.posY + ' ' + config.earth.posZ);
+                earthEntity.setAttribute('rotation', config.earth.rotX + ' ' + config.earth.rotY + ' ' + config.earth.rotZ);
+                marker.appendChild(earthEntity);
+                
+                // Create orbit container (this will rotate)
+                var orbitContainer = document.createElement('a-entity');
+                orbitContainer.setAttribute('id', 'orbit-container-' + modelName);
+                orbitContainer.setAttribute('position', '0 0 0');
+                orbitContainer.setAttribute('rotation', config.orbitTilt + ' 0 0');
+                
+                // Create model entity at orbit radius
+                var modelEntity = document.createElement('a-entity');
+                modelEntity.setAttribute('id', 'model-' + modelName);
+                var modelFile = config.modelFile || 'model.gltf';
+                modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + modelFile);
                 modelEntity.setAttribute('scale', config.size + ' ' + config.size + ' ' + config.size);
-                modelEntity.setAttribute('position', config.posX + ' ' + config.posY + ' ' + config.posZ);
+                modelEntity.setAttribute('position', config.orbitRadius + ' 0 0');
                 modelEntity.setAttribute('rotation', config.rotX + ' ' + config.rotY + ' ' + config.rotZ);
+                
+                // Add model to orbit container
+                orbitContainer.appendChild(modelEntity);
+                
+                // Add orbit container to marker
+                marker.appendChild(orbitContainer);
+                
+                // Setup orbit animation
+                setupOrbitAnimation(orbitContainer, config.orbitSpeed);
+                
+                console.log('✓ Created orbit setup for:', modelName, 'radius:', config.orbitRadius, 'speed:', config.orbitSpeed);
+            } else {
+                // Standard model without orbit
+                var modelEntity = document.createElement('a-entity');
+                modelEntity.setAttribute('id', 'model-' + modelName);
+                
+                // Support both .gltf and .glb files
+                var modelFile = config.modelFile || 'model.gltf';
+                modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + modelFile);
+                
+                // Apply cached configuration
+                if (config) {
+                    modelEntity.setAttribute('scale', config.size + ' ' + config.size + ' ' + config.size);
+                    modelEntity.setAttribute('position', config.posX + ' ' + config.posY + ' ' + config.posZ);
+                    modelEntity.setAttribute('rotation', config.rotX + ' ' + config.rotY + ' ' + config.rotZ);
+                }
+                
+                // Add model to marker
+                marker.appendChild(modelEntity);
             }
-            
-            // Add model to marker
-            marker.appendChild(modelEntity);
             
             // Wait for model to load and add proper PBR lighting
             modelEntity.addEventListener('model-loaded', function() {

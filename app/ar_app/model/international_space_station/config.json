@@ -1,5 +1,5 @@
 {
-  "size": 0.03,
+  "size": 0.01,
   "position": {
     "x": 0,
     "y": 1.2,
@@ -10,6 +10,24 @@
     "y": 0,
     "z": 0
   },
+    "spin_around_earth_orbit": true,
+  "earth": {
+    "model_file": "earth.glb",
+    "size": 0.5,
+    "position": {
+      "x": 0,
+      "y": -0.5,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    }
+  },
+  "orbit_radius": 1.1,
+  "orbit_speed": 1,
+  "orbit_tilt": 23,
   "model_file": "ISS_stationary.glb",
   "desc_info": {
     "title": "國際太空站",

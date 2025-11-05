@@ -1,0 +1,43 @@
+{
+  "size": 3,
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "rotation": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "marker_type": "pattern",
+  "model_file": "model.glb",
+  
+  "_comment_orbit": "=== ORBIT ANIMATION SETTINGS ===",
+  "spin_around_earth_orbit": true,
+  "earth": {
+    "model_file": "../common_model/earth.glb",
+    "size": 0.5,
+    "position": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    },
+    "rotation": {
+      "x": 0,
+      "y": 0,
+      "z": 0
+    }
+  },
+  "orbit_radius": 2.5,
+  "orbit_speed": 1,
+  "orbit_tilt": 23,
+  
+  "_comment_orbit_params": "orbit_radius: Distance from Earth center (default: 2) | orbit_speed: Rotation speed multiplier (default: 1) | orbit_tilt: Orbital plane tilt in degrees (default: 0)",
+  
+  "desc_info": {
+    "title": "Satellite Name",
+    "description": "Satellite description",
+    "hk_narrative": "Cantonese audio narration text"
+  }
+}
