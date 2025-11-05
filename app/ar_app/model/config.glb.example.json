@@ -1,0 +1,22 @@
+{
+  "size": 0.3,
+  "position": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "rotation": {
+    "x": 0,
+    "y": 0,
+    "z": 0
+  },
+  "marker_type": "pattern",
+  "nft_descriptor": null,
+  "model_file": "model.glb",
+  "desc_info": {
+    "title": "GLB Model Example",
+    "hk_narrative": "這是一個使用GLB格式的3D模型示例。",
+    "youtube_video_src": null,
+    "local_video_src": null
+  }
+}

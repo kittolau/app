@@ -190,8 +190,13 @@
     </button>
     
     <!-- A-Frame AR Scene -->
-    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;' vr-mode-ui="enabled: false" id="ar-scene">
-        <!-- Multiple markers - AR.js can handle multiple patterns but shows one at a time -->
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;' vr-mode-ui="enabled: false" renderer="colorManagement: true; physicallyCorrectLights: true;" id="ar-scene">
+        <!-- Global lighting for PBR materials -->
+        <a-entity light="type: ambient; color: #BBB; intensity: 1"></a-entity>
+        <a-entity light="type: hemisphere; color: #FFF; groundColor: #888; intensity: 1"></a-entity>
+        <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-1 2 1"></a-entity>
+        
+        <!-- Multiple markers - AR.js can handle pattern markers, NFT image tracking, and barcodes -->
         <a-entity camera></a-entity>
     </a-scene>
     
@@ -204,7 +209,7 @@
         var speechSynthesis = window.speechSynthesis;
         var currentUtterance = null;
         
-        console.log('=== AR Viewer (Multi-Marker Support) ===');
+        console.log('=== AR Viewer (Multi-Marker & NFT Support) ===');
         
         // Load model list and cache all configurations
         fetch('model/model_list.json')
@@ -254,7 +259,10 @@
                         posZ: data.position ? data.position.z || 0 : 0,
                         rotX: data.rotation ? data.rotation.x || 0 : 0,
                         rotY: data.rotation ? data.rotation.y || 0 : 0,
-                        rotZ: data.rotation ? data.rotation.z || 0 : 0
+                        rotZ: data.rotation ? data.rotation.z || 0 : 0,
+                        markerType: data.marker_type || 'pattern', // 'pattern', 'nft', or 'barcode'
+                        nftDescriptor: data.nft_descriptor || null, // Path to NFT descriptor files (without extension)
+                        modelFile: data.model_file || 'model.gltf' // Support both .gltf and .glb files
                     };
                     
                     // Cache description info
@@ -265,7 +273,7 @@
                         local_video_src: data.desc_info ? data.desc_info.local_video_src || null : null
                     };
                     
-                    console.log('✓ Cached config for:', modelName);
+                    console.log('✓ Cached config for:', modelName, '(Type:', data.marker_type || 'pattern', ', Model:', data.model_file || 'model.gltf', ')');
                 })
                 .catch(function(error) {
                     console.error('⚠️ Failed to load config for', modelName, ':', error);
@@ -303,20 +311,52 @@
         
         // Create a marker and model for a specific model
         function createMarkerForModel(scene, modelName) {
-            // Create marker element
-            var marker = document.createElement('a-marker');
-            marker.setAttribute('type', 'pattern');
-            marker.setAttribute('url', 'model/' + modelName + '/pattern-marker.patt');
+            var config = modelConfigs[modelName];
+            if (!config) {
+                console.warn('No config found for:', modelName);
+                return;
+            }
+            
+            // Create marker element based on type
+            var marker = document.createElement('a-nft');
+            var markerType = config.markerType || 'pattern';
+            
+            if (markerType === 'nft' && config.nftDescriptor) {
+                // NFT (Natural Feature Tracking) marker
+                marker = document.createElement('a-nft');
+                marker.setAttribute('type', 'nft');
+                marker.setAttribute('url', config.nftDescriptor);
+                marker.setAttribute('smooth', 'true');
+                marker.setAttribute('smoothCount', '10');
+                marker.setAttribute('smoothTolerance', '0.01');
+                marker.setAttribute('smoothThreshold', '5');
+                console.log('Creating NFT marker for:', modelName, 'with descriptor:', config.nftDescriptor);
+            } else if (markerType === 'barcode') {
+                // Barcode/QR marker
+                marker = document.createElement('a-marker');
+                marker.setAttribute('type', 'barcode');
+                marker.setAttribute('value', config.barcodeValue || '0');
+                console.log('Creating barcode marker for:', modelName);
+            } else {
+                // Pattern marker (default)
+                marker = document.createElement('a-marker');
+                marker.setAttribute('type', 'pattern');
+                marker.setAttribute('url', 'model/' + modelName + '/pattern-marker.patt');
+                console.log('Creating pattern marker for:', modelName);
+            }
+            
             marker.setAttribute('id', 'marker-' + modelName);
             marker.setAttribute('raycaster', 'objects: .clickable');
             
             // Create model entity
             var modelEntity = document.createElement('a-entity');
             modelEntity.setAttribute('id', 'model-' + modelName);
-            modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/model.gltf');
+            
+            // Support both .gltf and .glb files
+            var modelFile = config.modelFile || 'model.gltf';
+            modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + modelFile);
             
             // Apply cached configuration
-            var config = modelConfigs[modelName];
             if (config) {
                 modelEntity.setAttribute('scale', config.size + ' ' + config.size + ' ' + config.size);
                 modelEntity.setAttribute('position', config.posX + ' ' + config.posY + ' ' + config.posZ);
@@ -325,6 +365,36 @@
             
             // Add model to marker
             marker.appendChild(modelEntity);
+            
+            // Wait for model to load and add proper PBR lighting
+            modelEntity.addEventListener('model-loaded', function() {
+                console.log('✓ Model loaded:', modelName);
+                
+                // Add hemisphere light for better PBR rendering
+                var hemisphereLight = document.createElement('a-entity');
+                hemisphereLight.setAttribute('light', 'type: hemisphere; color: #FFF; groundColor: #555; intensity: 1.5');
+                hemisphereLight.setAttribute('position', '0 2 0');
+                marker.appendChild(hemisphereLight);
+                
+                // Add directional light from multiple angles for PBR reflections
+                var keyLight = document.createElement('a-entity');
+                keyLight.setAttribute('light', 'type: directional; color: #FFF; intensity: 1.5');
+                keyLight.setAttribute('position', '2 4 2');
+                marker.appendChild(keyLight);
+                
+                var fillLight = document.createElement('a-entity');
+                fillLight.setAttribute('light', 'type: directional; color: #FFF; intensity: 0.8');
+                fillLight.setAttribute('position', '-2 3 -1');
+                marker.appendChild(fillLight);
+                
+                // Add point light close to model for highlights
+                var pointLight = document.createElement('a-entity');
+                pointLight.setAttribute('light', 'type: point; color: #FFF; intensity: 1; distance: 10; decay: 2');
+                pointLight.setAttribute('position', '0 2 1');
+                marker.appendChild(pointLight);
+                
+                console.log('✓ PBR lighting setup complete for:', modelName);
+            });
             
             // Add marker event listeners
             marker.addEventListener('markerFound', function() {

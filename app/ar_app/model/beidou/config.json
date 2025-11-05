@@ -1,15 +1,16 @@
 {
-  "size": 0.4,
+  "size": 3.8,
   "position": {
     "x": 0,
-    "y": 1.2,
+    "y": 0.7,
     "z": 0
   },
   "rotation": {
-    "x": 90,
-    "y": 0,
-    "z": 0
+    "x": 0,
+    "y": 90,
+    "z": 220
   },
+  "model_file": "beidou.glb",
   "desc_info": {
     "title": "北斗衛星",
     "youtube_video_src": "https://www.youtube.com/watch?v=vwVKKGlIe-w",

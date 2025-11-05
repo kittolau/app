@@ -252,7 +252,7 @@
 <body>
     <!-- Instructions for users -->
     <div id="instructions">
-        Point camera at AR marker to see Sputnik 1
+        Point camera at AR marker to see the model
     </div>
     
     <!-- Size control slider -->
@@ -305,29 +305,190 @@
     
     <!-- AR message when marker is detected -->
     <div id="ar-hover-message">
-        🛰️ Sputnik 1<br/>
-        <span class="subtitle">First artificial Earth satellite (1957)</span>
+        🛰️ <span id="model-name-display">Model</span><br/>
+        <span class="subtitle" id="model-description">3D Model Viewer</span>
     </div>
     
     <!-- A-Frame AR Scene -->
-    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; patternRatio: 0.5;' vr-mode-ui="enabled: false">
-        <!-- Use custom marker pattern -->
-        <a-marker type="pattern" url="model/sputnik1/pattern-marker.patt">
-            <!-- Sputnik 1 3D model -->
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; patternRatio: 0.5;' vr-mode-ui="enabled: false" renderer="colorManagement: true; physicallyCorrectLights: true;">
+        <!-- Global lighting for PBR materials -->
+        <a-entity light="type: ambient; color: #BBB; intensity: 1"></a-entity>
+        <a-entity light="type: hemisphere; color: #FFF; groundColor: #888; intensity: 1"></a-entity>
+        <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-1 2 1"></a-entity>
+        
+        <!-- Use custom marker pattern - will be dynamically set -->
+        <a-marker id="ar-marker" type="pattern" url="">
+            <!-- 3D model - will be dynamically updated to use .gltf or .glb from config -->
             <a-entity 
                 id="sputnik-model" 
-                gltf-model="model/sputnik1/scene.gltf" 
+                gltf-model="" 
                 scale="0.3 0.3 0.3" 
                 rotation="0 0 0" 
                 position="0 0 0">
             </a-entity>
+            
+            <!-- Additional PBR lighting for the model -->
+            <a-entity light="type: hemisphere; color: #FFF; groundColor: #555; intensity: 1.5" position="0 2 0"></a-entity>
+            <a-entity light="type: directional; color: #FFF; intensity: 1.5" position="2 4 2"></a-entity>
+            <a-entity light="type: directional; color: #FFF; intensity: 0.8" position="-2 3 -1"></a-entity>
+            <a-entity light="type: point; color: #FFF; intensity: 1; distance: 10; decay: 2" position="0 2 1"></a-entity>
         </a-marker>
         <a-entity camera></a-entity>
     </a-scene>
     
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            console.log('=== Sputnik 1 AR App Initialized ===');
+            console.log('=== AR App Initialized ===');
+            
+            // Get model name from query string, default to 'sputnik1'
+            var urlParams = new URLSearchParams(window.location.search);
+            var modelName = urlParams.get('model') || 'sputnik1';
+            console.log('Loading model:', modelName);
+            
+            // Configuration - load from config.json or use defaults
+            var modelConfig = {
+                modelFile: 'model.gltf', // Default to gltf, can be changed to model.glb
+                modelPath: 'model/' + modelName + '/',
+                size: 0.3,
+                rotation: { x: 0, y: 0, z: 0 },
+                position: { x: 0, y: 0, z: 0 }
+            };
+            
+            // Try to load config from JSON
+            fetch('model/' + modelName + '/config.json')
+                .then(function(response) {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    throw new Error('Config not found, using defaults');
+                })
+                .then(function(config) {
+                    console.log('✓ Config loaded:', config);
+                    // Update model configuration
+                    if (config.model_file) {
+                        modelConfig.modelFile = config.model_file;
+                    }
+                    if (config.size) {
+                        modelConfig.size = config.size;
+                    }
+                    if (config.rotation) {
+                        modelConfig.rotation.x = config.rotation.x || 0;
+                        modelConfig.rotation.y = config.rotation.y || 0;
+                        modelConfig.rotation.z = config.rotation.z || 0;
+                    }
+                    if (config.position) {
+                        modelConfig.position.x = config.position.x || 0;
+                        modelConfig.position.y = config.position.y || 0;
+                        modelConfig.position.z = config.position.z || 0;
+                    }
+                    
+                    // Update display name and description
+                    if (config.desc_info) {
+                        var nameDisplay = document.getElementById('model-name-display');
+                        var descDisplay = document.getElementById('model-description');
+                        if (nameDisplay) {
+                            nameDisplay.textContent = config.desc_info.name || modelName;
+                        }
+                        if (descDisplay) {
+                            descDisplay.textContent = config.desc_info.description || '3D Model Viewer';
+                        }
+                    }
+                    
+                    // Apply config to model
+                    applyModelConfig();
+                })
+                .catch(function(error) {
+                    console.warn('⚠️ Using default configuration:', error.message);
+                    // Set default display name
+                    var nameDisplay = document.getElementById('model-name-display');
+                    if (nameDisplay) {
+                        nameDisplay.textContent = modelName;
+                    }
+                    applyModelConfig();
+                });
+            
+            // Function to apply configuration to model
+            function applyModelConfig() {
+                var model = document.getElementById('sputnik-model');
+                var marker = document.getElementById('ar-marker');
+                
+                if (model) {
+                    // Update model source (gltf or glb)
+                    var modelPath = modelConfig.modelPath + modelConfig.modelFile;
+                    model.setAttribute('gltf-model', modelPath);
+                    console.log('✓ Model path set to:', modelPath);
+                    
+                    // Update marker pattern URL
+                    if (marker) {
+                        var markerPath = modelConfig.modelPath + 'pattern-marker.patt';
+                        marker.setAttribute('url', markerPath);
+                        console.log('✓ Marker pattern set to:', markerPath);
+                    }
+                    
+                    // Apply initial transformations
+                    model.setAttribute('scale', modelConfig.size + ' ' + modelConfig.size + ' ' + modelConfig.size);
+                    model.setAttribute('rotation', modelConfig.rotation.x + ' ' + modelConfig.rotation.y + ' ' + modelConfig.rotation.z);
+                    model.setAttribute('position', modelConfig.position.x + ' ' + modelConfig.position.y + ' ' + modelConfig.position.z);
+                    
+                    // Update sliders to match config
+                    var sizeSlider = document.getElementById('size-slider');
+                    var sizeValue = document.getElementById('size-value');
+                    if (sizeSlider && sizeValue) {
+                        sizeSlider.value = modelConfig.size;
+                        sizeValue.textContent = modelConfig.size;
+                    }
+                    
+                    var rotationXSlider = document.getElementById('rotation-x-slider');
+                    var rotationXValue = document.getElementById('rotation-x-value');
+                    if (rotationXSlider && rotationXValue) {
+                        rotationXSlider.value = modelConfig.rotation.x;
+                        rotationXValue.textContent = modelConfig.rotation.x;
+                        currentRotation.x = modelConfig.rotation.x;
+                    }
+                    
+                    var rotationSlider = document.getElementById('rotation-slider');
+                    var rotationValue = document.getElementById('rotation-value');
+                    if (rotationSlider && rotationValue) {
+                        rotationSlider.value = modelConfig.rotation.y;
+                        rotationValue.textContent = modelConfig.rotation.y;
+                        currentRotation.y = modelConfig.rotation.y;
+                    }
+                    
+                    var rotationZSlider = document.getElementById('rotation-z-slider');
+                    var rotationZValue = document.getElementById('rotation-z-value');
+                    if (rotationZSlider && rotationZValue) {
+                        rotationZSlider.value = modelConfig.rotation.z;
+                        rotationZValue.textContent = modelConfig.rotation.z;
+                        currentRotation.z = modelConfig.rotation.z;
+                    }
+                    
+                    var positionXSlider = document.getElementById('position-x-slider');
+                    var positionXValue = document.getElementById('position-x-value');
+                    if (positionXSlider && positionXValue) {
+                        positionXSlider.value = modelConfig.position.x;
+                        positionXValue.textContent = modelConfig.position.x;
+                        currentPosition.x = modelConfig.position.x;
+                    }
+                    
+                    var positionYSlider = document.getElementById('position-y-slider');
+                    var positionYValue = document.getElementById('position-y-value');
+                    if (positionYSlider && positionYValue) {
+                        positionYSlider.value = modelConfig.position.y;
+                        positionYValue.textContent = modelConfig.position.y;
+                        currentPosition.y = modelConfig.position.y;
+                    }
+                    
+                    var positionZSlider = document.getElementById('position-z-slider');
+                    var positionZValue = document.getElementById('position-z-value');
+                    if (positionZSlider && positionZValue) {
+                        positionZSlider.value = modelConfig.position.z;
+                        positionZValue.textContent = modelConfig.position.z;
+                        currentPosition.z = modelConfig.position.z;
+                    }
+                    
+                    console.log('✓ Configuration applied to model');
+                }
+            }
             
             // Get references to UI elements
             var marker = document.querySelector('a-marker');
@@ -355,7 +516,7 @@
             // Marker detection events
             if (marker) {
                 marker.addEventListener('markerFound', function () {
-                    console.log('✅ Sputnik 1 marker DETECTED!', new Date().toLocaleTimeString());
+                    console.log('✅ Marker DETECTED for model:', modelName, new Date().toLocaleTimeString());
                     if (hoverMsg) {
                         hoverMsg.style.display = 'block';
                         console.log('Overlay message shown');
@@ -523,7 +684,7 @@
             // Log when model is loaded
             if (model) {
                 model.addEventListener('model-loaded', function() {
-                    console.log('Sputnik 1 3D model loaded successfully');
+                    console.log('3D model loaded successfully:', modelName);
                 });
                 model.addEventListener('model-error', function(evt) {
                     console.error('Error loading 3D model:', evt.detail);

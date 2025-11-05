@@ -1,5 +1,5 @@
 {
-  "size": 0.4,
+  "size": 0.8,
   "position": {
     "x": 0,
     "y": 1.2,
@@ -10,6 +10,7 @@
     "y": 0,
     "z": 0
   },
+  "model_file": "sputnik1.glb",
   "desc_info": {
     "title": "Sputnik 1 (史普尼克 1 號)",
     "youtube_video_src": "https://www.youtube.com/watch?v=DTDb3eKpPiw",
