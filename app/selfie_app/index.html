@@ -154,22 +154,6 @@
             font-size: 24px;
         }
         
-        .filter-btn.halo {
-            background: radial-gradient(circle, #FFD700 0%, #FFA500 100%);
-        }
-        
-        .filter-btn.crown {
-            background: linear-gradient(135deg, #FFD700 0%, #FF6B6B 100%);
-        }
-        
-        .filter-btn.bunny {
-            background: linear-gradient(135deg, #FFC0CB 0%, #FF69B4 100%);
-        }
-        
-        .filter-btn.heart {
-            background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
-        }
-        
         .filter-btn.person {
             background: linear-gradient(135deg, #4CAF50 0%, #2196F3 100%);
         }
@@ -393,10 +377,6 @@
         <!-- Filter selector -->
         <div class="filter-selector">
             <button class="filter-btn none active" data-filter="none" title="No Filter">❌</button>
-            <button class="filter-btn halo" data-filter="halo" title="Halo">😇</button>
-            <button class="filter-btn crown" data-filter="crown" title="Crown">👑</button>
-            <button class="filter-btn bunny" data-filter="bunny" title="Bunny Ears">🐰</button>
-            <button class="filter-btn heart" data-filter="heart" title="Hearts">💕</button>
             <button class="filter-btn person" data-filter="person" title="Person Selfie">👤</button>
         </div>
         
@@ -595,18 +575,6 @@
             
             // Draw different filters based on selection
             switch (currentFilter) {
-                case 'halo':
-                    drawHalo(mirroredX, y - height * 0.7, width * 0.8);
-                    break;
-                case 'crown':
-                    drawCrown(mirroredX, y - height * 0.7, width * 0.9);
-                    break;
-                case 'bunny':
-                    drawBunnyEars(mirroredX, y - height * 0.6, width * 1.2);
-                    break;
-                case 'heart':
-                    drawHearts(mirroredX, y - height * 0.5, width);
-                    break;
                 case 'person':
                     drawPerson(mirroredX, y, width);
                     break;
@@ -615,126 +583,6 @@
                     // No filter
                     break;
             }
-            
-            ctx.restore();
-        }
-        
-        // Draw halo filter
-        function drawHalo(x, y, size) {
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
-            ctx.lineWidth = 8;
-            ctx.beginPath();
-            ctx.arc(x, y, size / 2, 0, Math.PI * 2);
-            ctx.stroke();
-            
-            // Add glow effect
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = '#FFD700';
-            ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
-            ctx.lineWidth = 4;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-        }
-        
-        // Draw crown filter
-        function drawCrown(x, y, size) {
-            ctx.fillStyle = '#FFD700';
-            ctx.strokeStyle = '#FF6B6B';
-            ctx.lineWidth = 3;
-            
-            const crownHeight = size * 0.4;
-            const crownWidth = size;
-            
-            ctx.beginPath();
-            ctx.moveTo(x - crownWidth / 2, y);
-            ctx.lineTo(x - crownWidth / 3, y - crownHeight);
-            ctx.lineTo(x - crownWidth / 6, y - crownHeight / 2);
-            ctx.lineTo(x, y - crownHeight);
-            ctx.lineTo(x + crownWidth / 6, y - crownHeight / 2);
-            ctx.lineTo(x + crownWidth / 3, y - crownHeight);
-            ctx.lineTo(x + crownWidth / 2, y);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
-            
-            // Add jewels
-            const jewels = [
-                { x: x - crownWidth / 3, y: y - crownHeight * 0.8 },
-                { x: x, y: y - crownHeight * 0.8 },
-                { x: x + crownWidth / 3, y: y - crownHeight * 0.8 }
-            ];
-            
-            jewels.forEach(jewel => {
-                ctx.fillStyle = '#FF1493';
-                ctx.beginPath();
-                ctx.arc(jewel.x, jewel.y, size * 0.08, 0, Math.PI * 2);
-                ctx.fill();
-            });
-        }
-        
-        // Draw bunny ears filter
-        function drawBunnyEars(x, y, size) {
-            ctx.fillStyle = 'rgba(255, 192, 203, 0.9)';
-            ctx.strokeStyle = 'rgba(255, 105, 180, 0.9)';
-            ctx.lineWidth = 3;
-            
-            const earWidth = size * 0.15;
-            const earHeight = size * 0.5;
-            
-            // Left ear
-            ctx.beginPath();
-            ctx.ellipse(x - size / 3, y, earWidth, earHeight, -0.3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Right ear
-            ctx.beginPath();
-            ctx.ellipse(x + size / 3, y, earWidth, earHeight, 0.3, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
-            
-            // Inner ears
-            ctx.fillStyle = 'rgba(255, 182, 193, 0.8)';
-            ctx.beginPath();
-            ctx.ellipse(x - size / 3, y, earWidth * 0.5, earHeight * 0.6, -0.3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.ellipse(x + size / 3, y, earWidth * 0.5, earHeight * 0.6, 0.3, 0, Math.PI * 2);
-            ctx.fill();
-        }
-        
-        // Draw hearts filter
-        function drawHearts(x, y, size) {
-            const hearts = [
-                { x: x - size * 0.6, y: y - size * 0.2, size: size * 0.15, angle: -0.3 },
-                { x: x + size * 0.6, y: y - size * 0.2, size: size * 0.15, angle: 0.3 },
-                { x: x - size * 0.4, y: y + size * 0.4, size: size * 0.12, angle: -0.2 },
-                { x: x + size * 0.4, y: y + size * 0.4, size: size * 0.12, angle: 0.2 }
-            ];
-            
-            hearts.forEach(heart => {
-                drawHeart(heart.x, heart.y, heart.size, heart.angle);
-            });
-        }
-        
-        // Draw single heart
-        function drawHeart(x, y, size, rotation = 0) {
-            ctx.save();
-            ctx.translate(x, y);
-            ctx.rotate(rotation);
-            
-            ctx.fillStyle = 'rgba(255, 20, 147, 0.8)';
-            ctx.strokeStyle = 'rgba(255, 105, 180, 0.9)';
-            ctx.lineWidth = 2;
-            
-            ctx.beginPath();
-            ctx.moveTo(0, size * 0.3);
-            ctx.bezierCurveTo(-size * 0.5, -size * 0.2, -size, size * 0.2, 0, size);
-            ctx.bezierCurveTo(size, size * 0.2, size * 0.5, -size * 0.2, 0, size * 0.3);
-            ctx.closePath();
-            ctx.fill();
-            ctx.stroke();
             
             ctx.restore();
         }
