@@ -34,15 +34,7 @@ app.use(compression({
             return false;
         }
         
-        // IMPORTANT: Force compression for GLB/GLTF files
-        // Even though they're binary, gzip can still reduce size by ~20-30%
-        // because Draco compression doesn't compress the entire file structure
-        if (req.url && (req.url.endsWith('.glb') || req.url.endsWith('.gltf') || 
-            req.url.endsWith('.bin') || req.url.endsWith('.json'))) {
-            return true;
-        }
-        
-        // Compress everything else by default
+        // Compress everything by default
         return compression.filter(req, res);
     }
 }));
