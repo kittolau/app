@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>AR Viewer - NFT Test</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    <script>
+        // Configure A-Frame to use Draco decoder for compressed models (compatible with A-Frame 1.6.0)
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof AFRAME !== 'undefined' && AFRAME.systems && AFRAME.systems['gltf-model']) {
+                // Set DRACO decoder path for A-Frame's GLTF system
+                const gltfSystem = AFRAME.systems['gltf-model'];
+                if (gltfSystem && gltfSystem.schema && gltfSystem.schema.dracoDecoderPath) {
+                    gltfSystem.schema.dracoDecoderPath.default = 'https://www.gstatic.com/draco/versioned/decoders/1.5.6/';
+                    console.log('✓ Draco decoder path configured for A-Frame 1.6.0');
+                }
+            }
+            
+            // Alternative method: Set via Three.js if available
+            if (typeof THREE !== 'undefined') {
+                // Wait for scene to be ready
+                setTimeout(function() {
+                    const scene = document.querySelector('a-scene');
+                    if (scene && scene.systems && scene.systems['gltf-model']) {
+                        const loader = scene.systems['gltf-model'].loader;
+                        if (loader && loader.dracoLoader) {
+                            loader.dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+                            console.log('✓ Draco decoder configured via Three.js loader');
+                        }
+                    }
+                }, 1000);
+            }
+        });
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body { margin: 0; overflow: hidden; }
+        
+        /* Ensure A-Frame scene is visible */
+        a-scene {
+            display: block !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
+            height: 100% !important;
+            z-index: 1 !important;
+        }
+        
+        /* Loading Splash Screen */
+        #loading-splash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at bottom, #1e3a8a 0%, #0a0e27 100%);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-out;
+        }
+
+        #loading-splash.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        /* Loading Content */
+        .loading-content {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            max-width: 500px;
+            padding: 40px 20px;
+        }
+
+        .loading-icon {
+            font-size: 100px;
+            margin-bottom: 30px;
+            animation: rocket-float 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(124, 58, 237, 0.6));
+        }
+
+        @keyframes rocket-float {
+            0%, 100% {
+                transform: translateY(0) rotate(-10deg);
+            }
+            50% {
+                transform: translateY(-20px) rotate(-10deg);
+            }
+        }
+
+        .loading-title {
+            font-size: 2.5em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #06b6d4 0%, #7c3aed 50%, #ec4899 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px rgba(124, 58, 237, 0.5);
+        }
+
+        .loading-subtitle {
+            color: #93c5fd;
+            font-size: 1.2em;
+            margin-bottom: 40px;
+            font-weight: 500;
+        }
+
+        /* Progress Bar Container */
+        .progress-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto 25px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 2px solid rgba(124, 58, 237, 0.3);
+            border-radius: 50px;
+            padding: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background: linear-gradient(90deg, #7c3aed 0%, #ec4899 50%, #06b6d4 100%);
+            border-radius: 40px;
+            width: 0%;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.8);
+            position: relative;
+            z-index: 1;
+        }
+
+        .progress-text {
+            color: #e0e7ff;
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .progress-percentage {
+            color: #fbbf24;
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        /* AR message overlay */
+        #ar-hover-message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            max-width: 90%;
+            text-align: center;
+        }
+        
+        #ar-hover-message h3 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        
+        #speak-button {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(calc(-100% - 10px));
+            background-color: rgba(33, 150, 243, 0.9);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: background-color 0.3s;
+        }
+        
+        #speak-button:hover {
+            background-color: rgba(33, 150, 243, 1);
+        }
+        
+        #speak-button:active {
+            background-color: rgba(25, 118, 210, 1);
+        }
+        
+        #speak-button.speaking {
+            background-color: rgba(244, 67, 54, 0.9);
+        }
+        
+        #speak-button.speaking:hover {
+            background-color: rgba(244, 67, 54, 1);
+        }
+        
+        /* Instructions */
+        #instructions {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 144, 255, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-family: Arial, sans-serif;
+            font-size: 0.95em;
+            z-index: 1500;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Debug Panel */
+        #debug-panel {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            z-index: 2000;
+            max-width: 320px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        #debug-panel h4 {
+            margin: 0 0 10px 0;
+            color: #fbbf24;
+            font-size: 14px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            padding-bottom: 5px;
+        }
+
+        .debug-section {
+            margin-bottom: 15px;
+        }
+
+        .debug-section label {
+            display: block;
+            margin-bottom: 5px;
+            color: #93c5fd;
+            font-size: 11px;
+        }
+
+        .debug-slider {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .debug-value {
+            color: #fbbf24;
+            font-weight: bold;
+        }
+
+        .debug-log {
+            max-height: 150px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 10px;
+            line-height: 1.3;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .debug-log-entry {
+            margin-bottom: 2px;
+            padding: 2px 0;
+        }
+
+        .debug-log-entry.info {
+            color: #93c5fd;
+        }
+
+        .debug-log-entry.success {
+            color: #10b981;
+        }
+
+        .debug-log-entry.warning {
+            color: #fbbf24;
+        }
+
+        .debug-log-entry.error {
+            color: #ef4444;
+        }
+
+        .debug-buttons {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .debug-button {
+            flex: 1;
+            padding: 5px 8px;
+            background: rgba(124, 58, 237, 0.7);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 10px;
+            transition: background 0.2s;
+        }
+
+        .debug-button:hover {
+            background: rgba(124, 58, 237, 0.9);
+        }
+
+        .debug-button:active {
+            background: rgba(124, 58, 237, 1);
+        }
+
+        #toggle-debug {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            z-index: 2001;
+            font-size: 12px;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 540px) {
+            #ar-hover-message {
+                font-size: 1.3em;
+                padding: 16px 24px;
+            }
+            
+            #instructions {
+                font-size: 0.85em;
+                padding: 10px 16px;
+            }
+
+            .loading-title {
+                font-size: 2em;
+            }
+
+            .loading-icon {
+                font-size: 80px;
+            }
+
+            .progress-container {
+                max-width: 90%;
+            }
+
+            .loading-content {
+                padding: 20px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Debug Panel Toggle -->
+    <button id="toggle-debug">🐛 Debug</button>
+
+    <!-- Debug Panel -->
+    <div id="debug-panel" style="display: none;">
+        <h4>🔧 NFT Debug Controls</h4>
+        
+        <div class="debug-section">
+            <label>Smooth Count: <span class="debug-value" id="smooth-count-value">10</span></label>
+            <input type="range" class="debug-slider" id="smooth-count" min="1" max="30" value="10">
+        </div>
+
+        <div class="debug-section">
+            <label>Smooth Tolerance: <span class="debug-value" id="smooth-tolerance-value">0.01</span></label>
+            <input type="range" class="debug-slider" id="smooth-tolerance" min="0.001" max="0.1" step="0.001" value="0.01">
+        </div>
+
+        <div class="debug-section">
+            <label>Smooth Threshold: <span class="debug-value" id="smooth-threshold-value">5</span></label>
+            <input type="range" class="debug-slider" id="smooth-threshold" min="1" max="20" value="5">
+        </div>
+
+        <div class="debug-section">
+            <label>Confidence Threshold: <span class="debug-value" id="confidence-threshold-value">0.6</span></label>
+            <input type="range" class="debug-slider" id="confidence-threshold" min="0.1" max="1.0" step="0.05" value="0.6">
+        </div>
+
+        <div class="debug-section">
+            <label>Camera Resolution:</label>
+            <select id="camera-resolution" style="width: 100%; padding: 3px; background: rgba(255,255,255,0.1); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 3px;">
+                <option value="640,480">640x480</option>
+                <option value="800,600">800x600</option>
+                <option value="1024,768">1024x768</option>
+                <option value="1280,720" selected>1280x720</option>
+                <option value="1920,1080">1920x1080</option>
+            </select>
+        </div>
+
+        <div class="debug-buttons">
+            <button class="debug-button" onclick="resetNFTParameters()">Reset</button>
+            <button class="debug-button" onclick="reloadNFTMarkers()">Reload</button>
+            <button class="debug-button" onclick="showReferenceImage()">Show Image</button>
+            <button class="debug-button" onclick="clearDebugLog()">Clear Log</button>
+        </div>
+
+        <div class="debug-section">
+            <label>📋 Debug Log:</label>
+            <div class="debug-log" id="debug-log"></div>
+        </div>
+    </div>
+
+    <!-- Loading Splash Screen -->
+    <div id="loading-splash">
+        <div class="loading-content">
+            <div class="loading-icon">🖼️</div>
+            <div class="loading-title">NFT AR Viewer</div>
+            <div class="loading-subtitle">正在準備 NFT 圖像追蹤體驗</div>
+            
+            <div class="progress-percentage" id="progress-percentage">0%</div>
+            
+            <div class="progress-container">
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+            
+            <div class="progress-text">
+                <span id="progress-text">初始化 NFT 追蹤...</span>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Instructions for users -->
+    <div id="instructions">
+        請將相機對準圖像以查看 AR 內容<br>
+        <small>NFT 圖像位置: app/ar_app/model/*/Yang_Liwei.jpg</small>
+    </div>
+    
+    <!-- AR message when NFT is detected -->
+    <div id="ar-hover-message">
+        <h3 id="model-title">NFT Image Detected</h3>
+    </div>
+    
+    <button id="speak-button">🔊 音頻解說</button>
+    
+        <!-- A-Frame AR Scene for NFT -->
+        <a-scene 
+            embedded 
+            arjs='sourceType: webcam; debugUIEnabled: false; trackingMethod: best; detectionMode: mono_and_matrix; matrixCodeType: 3x3;'
+            vr-mode-ui="enabled: false" 
+            renderer="colorManagement: true; physicallyCorrectLights: true; antialias: true;" 
+            id="ar-scene">
+            
+            <!-- Global lighting for PBR materials -->
+            <a-entity light="type: ambient; color: #BBB; intensity: 1"></a-entity>
+            <a-entity light="type: hemisphere; color: #FFF; groundColor: #888; intensity: 1"></a-entity>
+            <a-entity light="type: directional; color: #FFF; intensity: 0.6" position="-1 2 1"></a-entity>
+            
+            <!-- NFT Markers will be added dynamically -->
+            <a-entity camera></a-entity>
+        </a-scene>    <script>
+        // Global variables for NFT support
+        var modelConfigs = {};
+        var modelDescriptions = {};
+        var availableModels = [];
+        var currentModel = null;
+        var speechSynthesis = window.speechSynthesis;
+        var currentUtterance = null;
+        
+        // Debug and NFT parameters
+        var nftParams = {
+            smoothCount: 10,        // Stability: Higher = more stable tracking
+            smoothTolerance: 0.01,  // Sensitivity: Lower = more sensitive detection  
+            smoothThreshold: 5,     // Confidence: Lower = easier detection
+            confidenceThreshold: 0.6, // Detection confidence (0.0-1.0)
+            cameraResolution: '1280,720'
+        };
+        
+        // Debug logging function with categories
+        function debugLog(message, type = 'info') {
+            var timestamp = new Date().toLocaleTimeString();
+            var logContainer = document.getElementById('debug-log');
+            
+            if (logContainer) {
+                var logEntry = document.createElement('div');
+                logEntry.className = 'debug-log-entry debug-' + type;
+                
+                var timeSpan = document.createElement('span');
+                timeSpan.className = 'debug-time';
+                timeSpan.textContent = timestamp;
+                
+                var messageSpan = document.createElement('span');
+                messageSpan.className = 'debug-message';
+                messageSpan.textContent = message;
+                
+                logEntry.appendChild(timeSpan);
+                logEntry.appendChild(messageSpan);
+                logContainer.appendChild(logEntry);
+                
+                // Auto-scroll to bottom
+                logContainer.scrollTop = logContainer.scrollHeight;
+                
+                // Limit log entries to prevent memory issues
+                if (logContainer.children.length > 100) {
+                    logContainer.removeChild(logContainer.firstChild);
+                }
+            }
+            
+            // Also log to console with appropriate method
+            switch (type) {
+                case 'error':
+                    console.error(`[${timestamp}] ${message}`);
+                    break;
+                case 'warning':
+                    console.warn(`[${timestamp}] ${message}`);
+                    break;
+                case 'success':
+                    console.log(`[${timestamp}] ✓ ${message}`);
+                    break;
+                default:
+                    console.log(`[${timestamp}] ${message}`);
+            }
+        }
+        
+        // Loading progress management
+        var maxDebugLogEntries = 50;
+        
+        console.log('=== AR Viewer (NFT Image Tracking Only) ===');
+
+        // Toggle debug panel
+        function toggleDebugPanel() {
+            var panel = document.getElementById('debug-panel');
+            var toggleBtn = document.getElementById('toggle-debug');
+            
+            if (panel.style.display === 'none' || panel.style.display === '') {
+                panel.style.display = 'block';
+                toggleBtn.textContent = '❌ Close';
+                debugLog('Debug panel opened', 'info');
+            } else {
+                panel.style.display = 'none';
+                toggleBtn.textContent = '🐛 Debug';
+                debugLog('Debug panel closed', 'info');
+            }
+        }
+
+        // Reset NFT parameters to defaults
+        function resetNFTParameters() {
+            nftParams.smoothCount = 10;
+            nftParams.smoothTolerance = 0.01;
+            nftParams.smoothThreshold = 5;
+            nftParams.cameraResolution = '1280,720';
+            
+            // Update UI controls
+            document.getElementById('smooth-count').value = nftParams.smoothCount;
+            document.getElementById('smooth-tolerance').value = nftParams.smoothTolerance;
+            document.getElementById('smooth-threshold').value = nftParams.smoothThreshold;
+            document.getElementById('camera-resolution').value = nftParams.cameraResolution;
+            
+            updateDebugValues();
+            debugLog('NFT parameters reset to defaults', 'info');
+        }
+
+        // Update debug value displays
+        function updateDebugValues() {
+            document.getElementById('smooth-count-value').textContent = nftParams.smoothCount;
+            document.getElementById('smooth-tolerance-value').textContent = nftParams.smoothTolerance;
+            document.getElementById('smooth-threshold-value').textContent = nftParams.smoothThreshold;
+        }
+
+        // Reload NFT markers with new parameters
+        function reloadNFTMarkers() {
+            debugLog('Reloading NFT markers with new parameters...', 'info');
+            
+            // Remove existing markers
+            var existingMarkers = document.querySelectorAll('a-nft');
+            existingMarkers.forEach(function(marker) {
+                marker.parentNode.removeChild(marker);
+                debugLog('Removed existing NFT marker: ' + marker.id, 'info');
+            });
+            
+            // Recreate markers with new parameters
+            var scene = document.getElementById('ar-scene');
+            var nftModels = Object.keys(modelConfigs);
+            
+            debugLog(`Recreating ${nftModels.length} NFT markers...`, 'info');
+            
+            nftModels.forEach(function(modelName) {
+                createNFTMarkerForModel(scene, modelName);
+            });
+            
+            debugLog('NFT markers reloaded successfully', 'success');
+        }
+
+        // Update loading progress UI
+        function updateLoadingProgress(percentage, task, status) {
+            var progressBar = document.getElementById('progress-bar');
+            var progressPercentage = document.getElementById('progress-percentage');
+            var progressText = document.getElementById('progress-text');
+            
+            if (progressBar) {
+                progressBar.style.width = percentage + '%';
+            }
+            if (progressPercentage) {
+                progressPercentage.textContent = Math.round(percentage) + '%';
+            }
+            if (progressText && task) {
+                progressText.textContent = task;
+            }
+        }
+
+        // Hide loading splash
+        function hideLoadingSplash() {
+            var splash = document.getElementById('loading-splash');
+            var scene = document.querySelector('a-scene');
+            
+            console.log('🎬 Starting NFT AR experience...');
+            
+            if (splash) {
+                // Ensure scene is visible
+                if (scene) {
+                    scene.style.display = 'block';
+                    scene.style.visibility = 'visible';
+                }
+                
+                // Hide splash with animation
+                splash.classList.add('hidden');
+                setTimeout(function() {
+                    splash.style.display = 'none';
+                    console.log('✓ Loading splash hidden, NFT AR experience started');
+                }, 500);
+            }
+        }
+
+        // Load model list and cache configurations for NFT models only
+        updateLoadingProgress(5, '載入中...', '讀取 NFT 模型列表...');
+        debugLog('Starting NFT model loading process', 'info');
+        
+        fetch('model/model_list.json')
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Model list not found');
+                }
+                return response.json();
+            })
+            .then(function(data) {
+                console.log('✓ Model list loaded:', data);
+                debugLog(`Model list loaded with ${data.models ? data.models.length : 0} models`, 'success');
+                availableModels = data.models || [];
+                
+                updateLoadingProgress(20, '模型列表已載入', '找到 ' + availableModels.length + ' 個模型');
+                
+                // Load and cache configurations for NFT models only
+                return Promise.all(availableModels.map(function(modelName, index) {
+                    return loadNFTModelConfig(modelName, index);
+                }));
+            })
+            .then(function() {
+                var nftModels = Object.keys(modelConfigs);
+                console.log('✓ NFT model configurations cached:', nftModels);
+                debugLog(`NFT model configurations cached: ${nftModels.length} models`, 'success');
+                debugLog(`NFT models: ${nftModels.join(', ')}`, 'info');
+                
+                if (nftModels.length > 0) {
+                    updateLoadingProgress(70, '配置完成', '初始化 NFT AR 場景...');
+                    initializeNFTARScene();
+                } else {
+                    console.warn('⚠️ No NFT models found');
+                    debugLog('No NFT models found in configuration', 'warning');
+                    updateLoadingProgress(100, '完成', '沒有找到 NFT 模型');
+                    setTimeout(hideLoadingSplash, 1000);
+                }
+            })
+            .catch(function(error) {
+                console.error('⚠️ Failed to load NFT model configurations:', error);
+                debugLog('Failed to load NFT model configurations: ' + error.message, 'error');
+                updateLoadingProgress(100, '載入失敗', '發生錯誤...');
+                setTimeout(hideLoadingSplash, 1000);
+            });
+        
+        // Load configuration for NFT models only
+        function loadNFTModelConfig(modelName, index) {
+            var currentProgress = 20 + (index / availableModels.length) * 40;
+            updateLoadingProgress(
+                currentProgress, 
+                '載入 NFT 模型配置...', 
+                '正在處理: ' + modelName
+            );
+            
+            debugLog(`Loading config for model: ${modelName}`, 'info');
+            
+            return fetch('model/' + modelName + '/config.json')
+                .then(function(response) {
+                    if (!response.ok) {
+                        throw new Error('HTTP error! status: ' + response.status);
+                    }
+                    return response.json();
+                })
+                .then(function(data) {
+                    debugLog(`Config loaded for ${modelName}, marker_type: ${data.marker_type || 'undefined'}`, 'info');
+                    
+                    // Only process NFT models
+                    if (data.marker_type === 'nft' && data.nft_descriptor) {
+                        debugLog(`Processing NFT model: ${modelName}`, 'success');
+                        debugLog(`NFT descriptor: ${data.nft_descriptor}`, 'info');
+                        
+                        // Cache model configuration
+                        modelConfigs[modelName] = {
+                            size: data.size || 0.3,
+                            posX: data.position ? data.position.x || 0 : 0,
+                            posY: data.position ? data.position.y || 0 : 0,
+                            posZ: data.position ? data.position.z || 0 : 0,
+                            rotX: data.rotation ? data.rotation.x || 0 : 0,
+                            rotY: data.rotation ? data.rotation.y || 0 : 0,
+                            rotZ: data.rotation ? data.rotation.z || 0 : 0,
+                            nftDescriptor: data.nft_descriptor,
+                            modelFile: data.model_file || 'model.gltf',
+                            // Orbit animation settings
+                            spinAroundEarth: data.spin_around_earth_orbit || false,
+                            earth: data.earth ? {
+                                modelFile: data.earth.model_file || null,
+                                size: data.earth.size || 0.5,
+                                posX: data.earth.position ? data.earth.position.x || 0 : 0,
+                                posY: data.earth.position ? data.earth.position.y || 0 : 0,
+                                posZ: data.earth.position ? data.earth.position.z || 0 : 0,
+                                rotX: data.earth.rotation ? data.earth.rotation.x || 0 : 0,
+                                rotY: data.earth.rotation ? data.earth.rotation.y || 0 : 0,
+                                rotZ: data.earth.rotation ? data.earth.rotation.z || 0 : 0
+                            } : null,
+                            orbitRadius: data.orbit_radius || 2,
+                            orbitSpeed: data.orbit_speed || 1,
+                            orbitTilt: data.orbit_tilt || 0
+                        };
+                        
+                        // Cache description info
+                        modelDescriptions[modelName] = {
+                            title: data.desc_info ? data.desc_info.title || modelName : modelName,
+                            hk_narrative: data.desc_info ? data.desc_info.hk_narrative || 'NFT AR Model' : 'NFT AR Model',
+                            youtube_video_src: data.desc_info ? data.desc_info.youtube_video_src || null : null,
+                            local_video_src: data.desc_info ? data.desc_info.local_video_src || null : null
+                        };
+                        
+                        debugLog(`NFT config cached for: ${modelName}`, 'success');
+                        console.log('✓ Cached NFT config for:', modelName, 'with descriptor:', data.nft_descriptor);
+                    } else {
+                        debugLog(`Skipping non-NFT model: ${modelName} (Type: ${data.marker_type || 'pattern'})`, 'warning');
+                        console.log('⏭️ Skipping non-NFT model:', modelName, '(Type:', data.marker_type || 'pattern', ')');
+                    }
+                })
+                .catch(function(error) {
+                    debugLog(`Failed to load config for ${modelName}: ${error.message}`, 'error');
+                    console.error('⚠️ Failed to load config for', modelName, ':', error);
+                });
+        }
+        
+        // Function to setup orbit animation
+        function setupOrbitAnimation(orbitContainer, speed) {
+            var currentAngle = 0;
+            var rotationSpeed = speed * 0.5;
+            
+            function animate() {
+                if (orbitContainer && orbitContainer.object3D) {
+                    currentAngle += rotationSpeed;
+                    if (currentAngle >= 360) {
+                        currentAngle -= 360;
+                    }
+                    orbitContainer.object3D.rotation.y = currentAngle * Math.PI / 180;
+                }
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+        
+        // Initialize AR scene with NFT markers
+        function initializeNFTARScene() {
+            debugLog('Initializing NFT AR scene...', 'info');
+            console.log('🎬 Initializing NFT AR scene with models:', Object.keys(modelConfigs));
+            updateLoadingProgress(75, '初始化 NFT AR 場景', '設置 NFT 標記和模型...');
+            
+            var scene = document.getElementById('ar-scene');
+            if (!scene) {
+                debugLog('AR scene element not found!', 'error');
+                console.error('AR scene not found');
+                return;
+            }
+            
+            var nftModels = Object.keys(modelConfigs);
+            debugLog(`Found ${nftModels.length} NFT models to initialize`, 'info');
+            
+            if (nftModels.length === 0) {
+                debugLog('No NFT models available for initialization', 'error');
+                console.error('No NFT models available');
+                return;
+            }
+            
+            // Create NFT markers for each model
+            nftModels.forEach(function(modelName) {
+                debugLog(`Creating NFT marker for: ${modelName}`, 'info');
+                createNFTMarkerForModel(scene, modelName);
+            });
+            
+            debugLog(`NFT AR scene initialized with ${nftModels.length} NFT markers`, 'success');
+            console.log('✓ NFT AR scene initialized with', nftModels.length, 'NFT markers');
+            
+            updateLoadingProgress(100, '完成', '所有 NFT 資源已載入，準備進入 AR 體驗...');
+            setTimeout(hideLoadingSplash, 1000);
+        }
+        
+        // Create NFT marker and model for a specific model
+        function createNFTMarkerForModel(scene, modelName) {
+            var config = modelConfigs[modelName];
+            if (!config || !config.nftDescriptor) {
+                debugLog(`No NFT config found for: ${modelName}`, 'error');
+                console.warn('No NFT config found for:', modelName, '- skipping marker creation');
+                return;
+            }
+            
+            debugLog(`Creating NFT marker for: ${modelName}`, 'info');
+            debugLog(`NFT descriptor path: ${config.nftDescriptor}`, 'info');
+            debugLog(`Current NFT params - smoothCount: ${nftParams.smoothCount}, tolerance: ${nftParams.smoothTolerance}, threshold: ${nftParams.smoothThreshold}, confidence: ${nftParams.confidenceThreshold}`, 'info');
+            
+            // Create NFT marker
+            var marker = document.createElement('a-nft');
+            marker.setAttribute('type', 'nft');
+            marker.setAttribute('url', config.nftDescriptor);
+            marker.setAttribute('smooth', 'true');
+            marker.setAttribute('smoothCount', nftParams.smoothCount.toString());
+            marker.setAttribute('smoothTolerance', nftParams.smoothTolerance.toString());
+            marker.setAttribute('smoothThreshold', nftParams.smoothThreshold.toString());
+            marker.setAttribute('id', 'nft-marker-' + modelName);
+            marker.setAttribute('raycaster', 'objects: .clickable');
+            
+            // Set confidence threshold if supported
+            if (typeof marker.setAttribute === 'function') {
+                marker.setAttribute('detectionMode', 'mono_and_matrix');
+                marker.setAttribute('matrixCodeType', '3x3');
+            }
+            
+            debugLog(`NFT marker attributes set for: ${modelName}`, 'info');
+            console.log('Creating NFT marker for:', modelName, 'with descriptor:', config.nftDescriptor);
+            
+            // Check if this model should orbit around Earth
+            if (config.spinAroundEarth && config.earth && config.earth.modelFile) {
+                debugLog(`Setting up orbit animation for: ${modelName}`, 'info');
+                
+                // Create Earth model at center
+                var earthEntity = document.createElement('a-entity');
+                earthEntity.setAttribute('id', 'earth-' + modelName);
+                earthEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + config.earth.modelFile);
+                earthEntity.setAttribute('scale', config.earth.size + ' ' + config.earth.size + ' ' + config.earth.size);
+                earthEntity.setAttribute('position', config.earth.posX + ' ' + config.earth.posY + ' ' + config.earth.posZ);
+                earthEntity.setAttribute('rotation', config.earth.rotX + ' ' + config.earth.rotY + ' ' + config.earth.rotZ);
+                marker.appendChild(earthEntity);
+                
+                // Create orbit container
+                var orbitContainer = document.createElement('a-entity');
+                orbitContainer.setAttribute('id', 'orbit-container-' + modelName);
+                orbitContainer.setAttribute('position', '0 0 0');
+                orbitContainer.setAttribute('rotation', config.orbitTilt + ' 0 0');
+                
+                // Create model entity at orbit radius
+                var modelEntity = document.createElement('a-entity');
+                modelEntity.setAttribute('id', 'model-' + modelName);
+                var modelFile = config.modelFile || 'model.gltf';
+                modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + modelFile);
+                modelEntity.setAttribute('scale', config.size + ' ' + config.size + ' ' + config.size);
+                modelEntity.setAttribute('position', config.orbitRadius + ' 0 0');
+                modelEntity.setAttribute('rotation', config.rotX + ' ' + config.rotY + ' ' + config.rotZ);
+                
+                orbitContainer.appendChild(modelEntity);
+                marker.appendChild(orbitContainer);
+                
+                // Setup orbit animation
+                setupOrbitAnimation(orbitContainer, config.orbitSpeed);
+                
+                debugLog(`Orbit setup completed for: ${modelName}`, 'success');
+                console.log('✓ Created NFT orbit setup for:', modelName);
+            } else {
+                debugLog(`Setting up standard model for: ${modelName}`, 'info');
+                
+                // Standard model without orbit
+                var modelEntity = document.createElement('a-entity');
+                modelEntity.setAttribute('id', 'model-' + modelName);
+                
+                var modelFile = config.modelFile || 'model.gltf';
+                modelEntity.setAttribute('gltf-model', 'model/' + modelName + '/' + modelFile);
+                modelEntity.setAttribute('scale', config.size + ' ' + config.size + ' ' + config.size);
+                modelEntity.setAttribute('position', config.posX + ' ' + config.posY + ' ' + config.posZ);
+                modelEntity.setAttribute('rotation', config.rotX + ' ' + config.rotY + ' ' + config.rotZ);
+                
+                marker.appendChild(modelEntity);
+                debugLog(`Standard model setup completed for: ${modelName}`, 'success');
+            }
+            
+            // Add lighting when model loads
+            modelEntity.addEventListener('model-loaded', function() {
+                debugLog(`3D model loaded successfully for: ${modelName}`, 'success');
+                console.log('✓ NFT Model loaded:', modelName);
+                
+                // Add enhanced lighting for NFT models
+                var hemisphereLight = document.createElement('a-entity');
+                hemisphereLight.setAttribute('light', 'type: hemisphere; color: #FFF; groundColor: #555; intensity: 1.5');
+                hemisphereLight.setAttribute('position', '0 2 0');
+                marker.appendChild(hemisphereLight);
+                
+                var keyLight = document.createElement('a-entity');
+                keyLight.setAttribute('light', 'type: directional; color: #FFF; intensity: 1.5');
+                keyLight.setAttribute('position', '2 4 2');
+                marker.appendChild(keyLight);
+                
+                debugLog(`Lighting setup completed for: ${modelName}`, 'success');
+                console.log('✓ NFT PBR lighting setup complete for:', modelName);
+            });
+
+            // Add model loading error handler
+            modelEntity.addEventListener('model-error', function(evt) {
+                debugLog(`3D model failed to load for: ${modelName} - ${evt.detail}`, 'error');
+                console.error('❌ NFT Model failed to load:', modelName, evt.detail);
+            });
+            
+            // Add NFT marker event listeners with enhanced debugging
+            marker.addEventListener('markerFound', function() {
+                debugLog(`🎯 NFT marker detected: ${modelName}`, 'success');
+                onNFTMarkerFound(modelName);
+            });
+            
+            marker.addEventListener('markerLost', function() {
+                debugLog(`❌ NFT marker lost: ${modelName}`, 'warning');
+                onNFTMarkerLost(modelName);
+            });
+
+            // Add comprehensive NFT event debugging
+            marker.addEventListener('nftLoaded', function() {
+                debugLog(`📷 NFT loaded successfully: ${modelName}`, 'success');
+            });
+
+            marker.addEventListener('nftLoadFailed', function(evt) {
+                debugLog(`📷 NFT load failed: ${modelName} - ${evt.detail}`, 'error');
+            });
+            
+            // Add AR.js system events for NFT debugging
+            marker.addEventListener('arjs-video-loaded', function() {
+                debugLog(`📹 Video loaded for NFT: ${modelName}`, 'info');
+            });
+            
+            // Additional error handling
+            marker.addEventListener('error', function(evt) {
+                debugLog(`❌ NFT marker error: ${modelName} - ${evt.detail || 'Unknown error'}`, 'error');
+            });
+            
+            // Check if NFT files exist by trying to load them
+            setTimeout(function() {
+                debugLog(`🔍 Checking NFT descriptor files for: ${modelName}`, 'info');
+                
+                // Test if .fset file exists
+                fetch(config.nftDescriptor + '.fset')
+                    .then(function(response) {
+                        if (response.ok) {
+                            debugLog(`✅ .fset file found: ${config.nftDescriptor}.fset`, 'success');
+                        } else {
+                            debugLog(`❌ .fset file missing: ${config.nftDescriptor}.fset (Status: ${response.status})`, 'error');
+                        }
+                    })
+                    .catch(function(error) {
+                        debugLog(`❌ .fset file check failed: ${error.message}`, 'error');
+                    });
+                    
+                // Test if .iset file exists  
+                fetch(config.nftDescriptor + '.iset')
+                    .then(function(response) {
+                        if (response.ok) {
+                            debugLog(`✅ .iset file found: ${config.nftDescriptor}.iset`, 'success');
+                        } else {
+                            debugLog(`❌ .iset file missing: ${config.nftDescriptor}.iset (Status: ${response.status})`, 'error');
+                        }
+                    })
+                    .catch(function(error) {
+                        debugLog(`❌ .iset file check failed: ${error.message}`, 'error');
+                    });
+                    
+                // Test if .fset3 file exists
+                fetch(config.nftDescriptor + '.fset3')
+                    .then(function(response) {
+                        if (response.ok) {
+                            debugLog(`✅ .fset3 file found: ${config.nftDescriptor}.fset3`, 'success');
+                        } else {
+                            debugLog(`❌ .fset3 file missing: ${config.nftDescriptor}.fset3 (Status: ${response.status})`, 'error');
+                        }
+                    })
+                    .catch(function(error) {
+                        debugLog(`❌ .fset3 file check failed: ${error.message}`, 'error');
+                    });
+                    
+            }, 1000);
+            
+            // Add marker to scene
+            scene.appendChild(marker);
+            
+            debugLog(`NFT marker added to scene: ${modelName}`, 'success');
+            console.log('✓ Created NFT marker for:', modelName);
+        }
+        
+        // Handle NFT marker found event
+        function onNFTMarkerFound(modelName) {
+            console.log('✅ NFT Image detected:', modelName, new Date().toLocaleTimeString());
+            currentModel = modelName;
+            
+            // Update AR message with model-specific info
+            updateARMessage(modelName);
+            
+            // Show overlay and speak button, hide instructions
+            var hoverMsg = document.getElementById('ar-hover-message');
+            var speakBtn = document.getElementById('speak-button');
+            var instructions = document.getElementById('instructions');
+            
+            if (hoverMsg) {
+                hoverMsg.style.display = 'block';
+            }
+            if (speakBtn) {
+                speakBtn.style.display = 'block';
+            }
+            if (instructions) {
+                instructions.style.display = 'none';
+            }
+        }
+        
+        // Handle NFT marker lost event
+        function onNFTMarkerLost(modelName) {
+            console.log('❌ NFT Image lost:', modelName, new Date().toLocaleTimeString());
+            
+            // Only hide if this was the current model
+            if (currentModel === modelName) {
+                currentModel = null;
+                
+                // Stop any ongoing speech
+                if (speechSynthesis.speaking) {
+                    speechSynthesis.cancel();
+                }
+                
+                // Hide overlay and speak button, show instructions
+                var hoverMsg = document.getElementById('ar-hover-message');
+                var speakBtn = document.getElementById('speak-button');
+                var instructions = document.getElementById('instructions');
+                
+                if (hoverMsg) {
+                    hoverMsg.style.display = 'none';
+                }
+                if (speakBtn) {
+                    speakBtn.style.display = 'none';
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 音頻解說';
+                }
+            }
+        }
+        
+        // Update NFT parameters for all markers
+        function updateNFTParameters() {
+            debugLog(`Updating NFT parameters - count: ${nftParams.smoothCount}, tolerance: ${nftParams.smoothTolerance}, threshold: ${nftParams.smoothThreshold}, confidence: ${nftParams.confidenceThreshold}`, 'info');
+            
+            // Find all NFT markers and update their parameters
+            var nftMarkers = document.querySelectorAll('a-nft');
+            debugLog(`Found ${nftMarkers.length} NFT markers to update`, 'info');
+            
+            nftMarkers.forEach(function(marker, index) {
+                marker.setAttribute('smoothCount', nftParams.smoothCount.toString());
+                marker.setAttribute('smoothTolerance', nftParams.smoothTolerance.toString());
+                marker.setAttribute('smoothThreshold', nftParams.smoothThreshold.toString());
+                debugLog(`Updated marker ${index + 1} parameters`, 'info');
+            });
+            
+            debugLog('NFT parameters updated for all markers', 'success');
+        }
+        
+        // Camera resolution management
+        function updateCameraResolution() {
+            debugLog(`Updating camera resolution to: ${nftParams.cameraResolution}`, 'info');
+            
+            var arjsSystem = document.querySelector('a-scene').systems['arjs'];
+            if (arjsSystem && arjsSystem.arController) {
+                try {
+                    // Parse resolution
+                    var [width, height] = nftParams.cameraResolution.split(',').map(Number);
+                    
+                    // Update camera constraints
+                    arjsSystem.arController.cameraParameters.updateCameraParameters({
+                        video: {
+                            width: { ideal: width },
+                            height: { ideal: height }
+                        }
+                    });
+                    
+                    debugLog(`Camera resolution updated to ${width}x${height}`, 'success');
+                } catch (error) {
+                    debugLog(`Failed to update camera resolution: ${error.message}`, 'error');
+                }
+            } else {
+                debugLog('AR.js system not ready for resolution update', 'warning');
+            }
+        }
+        
+        // Reset NFT parameters to defaults
+        function resetNFTParameters() {
+            debugLog('Resetting NFT parameters to defaults', 'info');
+            
+            nftParams.smoothCount = 10;
+            nftParams.smoothTolerance = 0.01;
+            nftParams.smoothThreshold = 5;
+            nftParams.confidenceThreshold = 0.6;
+            nftParams.cameraResolution = '1280,720';
+            
+            // Update UI
+            document.getElementById('smooth-count').value = nftParams.smoothCount;
+            document.getElementById('smooth-count-value').textContent = nftParams.smoothCount;
+            document.getElementById('smooth-tolerance').value = nftParams.smoothTolerance;
+            document.getElementById('smooth-tolerance-value').textContent = nftParams.smoothTolerance;
+            document.getElementById('smooth-threshold').value = nftParams.smoothThreshold;
+            document.getElementById('smooth-threshold-value').textContent = nftParams.smoothThreshold;
+            document.getElementById('confidence-threshold').value = nftParams.confidenceThreshold;
+            document.getElementById('confidence-threshold-value').textContent = nftParams.confidenceThreshold;
+            document.getElementById('camera-resolution').value = nftParams.cameraResolution;
+            
+            // Apply changes
+            updateNFTParameters();
+            updateCameraResolution();
+            
+            debugLog('NFT parameters reset to defaults', 'success');
+        }
+        
+        // Reload all NFT markers with current parameters
+        function reloadNFTMarkers() {
+            debugLog('Reloading all NFT markers...', 'info');
+            
+            // Remove existing markers
+            var existingMarkers = document.querySelectorAll('a-nft');
+            existingMarkers.forEach(function(marker) {
+                marker.parentNode.removeChild(marker);
+            });
+            
+            debugLog(`Removed ${existingMarkers.length} existing markers`, 'info');
+            
+            // Recreate markers with current parameters
+            setTimeout(function() {
+                initializeNFTARScene();
+                debugLog('NFT markers reloaded with current parameters', 'success');
+            }, 500);
+        }
+        
+        // Clear debug log
+        function clearDebugLog() {
+            var logContainer = document.getElementById('debug-log');
+            if (logContainer) {
+                logContainer.innerHTML = '';
+                debugLog('Debug log cleared', 'info');
+            }
+        }
+        
+        // Show reference NFT image
+        function showReferenceImage() {
+            var availableImages = Object.keys(modelConfigs);
+            if (availableImages.length > 0) {
+                var modelName = availableImages[0]; // Use first available model
+                var imagePath = 'model/' + modelName + '/Yang_Liwei.jpg';
+                
+                // Create popup to show reference image
+                var popup = document.createElement('div');
+                popup.style.cssText = `
+                    position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                    background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px;
+                    z-index: 3000; max-width: 80%; max-height: 80%;
+                `;
+                
+                var img = document.createElement('img');
+                img.src = imagePath;
+                img.style.cssText = 'max-width: 100%; max-height: 60vh; border-radius: 5px;';
+                
+                var closeBtn = document.createElement('button');
+                closeBtn.textContent = 'Close';
+                closeBtn.style.cssText = `
+                    display: block; margin: 10px auto 0; padding: 8px 16px;
+                    background: #fff; border: none; border-radius: 5px; cursor: pointer;
+                `;
+                closeBtn.onclick = function() { document.body.removeChild(popup); };
+                
+                var title = document.createElement('p');
+                title.textContent = 'Point camera at this image:';
+                title.style.cssText = 'color: white; text-align: center; margin: 0 0 10px 0;';
+                
+                popup.appendChild(title);
+                popup.appendChild(img);
+                popup.appendChild(closeBtn);
+                document.body.appendChild(popup);
+                
+                debugLog('Reference image displayed: ' + imagePath, 'info');
+            } else {
+                debugLog('No NFT models found to show reference image', 'warning');
+            }
+        }
+        
+        // Function to update AR message content
+        function updateARMessage(modelName) {
+            var desc = modelDescriptions[modelName];
+            var titleEl = document.getElementById('model-title');
+            
+            if (titleEl && desc && desc.title) {
+                titleEl.textContent = desc.title;
+            }
+        }
+        
+        // Speak the narrative using Web Speech API
+        function speakNarrative(modelName) {
+            var desc = modelDescriptions[modelName];
+            
+            if (!desc || !desc.hk_narrative) {
+                console.warn('No narrative found for:', modelName);
+                return;
+            }
+            
+            // Stop any ongoing speech
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            
+            // Create utterance
+            currentUtterance = new SpeechSynthesisUtterance(desc.hk_narrative);
+            currentUtterance.lang = 'zh-HK';
+            
+            // Try to find a Cantonese voice
+            var voices = speechSynthesis.getVoices();
+            var cantoneseVoice = voices.find(function(voice) {
+                return voice.lang === 'zh-HK' || voice.lang.startsWith('zh-HK');
+            });
+            
+            if (cantoneseVoice) {
+                currentUtterance.voice = cantoneseVoice;
+            }
+            
+            // Set speech parameters
+            currentUtterance.rate = 0.9;
+            currentUtterance.pitch = 1;
+            currentUtterance.volume = 1;
+            
+            // Update button state
+            var speakBtn = document.getElementById('speak-button');
+            if (speakBtn) {
+                speakBtn.classList.add('speaking');
+                speakBtn.textContent = '⏹ 停止';
+            }
+            
+            // Handle speech end
+            currentUtterance.onend = function() {
+                if (speakBtn) {
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 音頻解說';
+                }
+            };
+            
+            // Handle speech error
+            currentUtterance.onerror = function(event) {
+                console.error('Speech error:', event);
+                if (speakBtn) {
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 音頻解說';
+                }
+            };
+            
+            // Speak
+            speechSynthesis.speak(currentUtterance);
+            console.log('🔊 Speaking NFT:', desc.title);
+        }
+        
+        // Toggle speech (play/stop)
+        function toggleSpeech() {
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+                var speakBtn = document.getElementById('speak-button');
+                if (speakBtn) {
+                    speakBtn.classList.remove('speaking');
+                    speakBtn.textContent = '🔊 音頻解說';
+                }
+            } else if (currentModel) {
+                speakNarrative(currentModel);
+            }
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            console.log('=== NFT AR Viewer with Image Tracking and Speech ===');
+            debugLog('🚀 NFT Debug Page Loading...', 'info');
+            updateLoadingProgress(10, '正在載入 NFT 追蹤系統', '初始化調試控制...');
+            
+            // Initialize debug controls
+            initializeDebugControls();
+            
+            // Set up speak button
+            var speakBtn = document.getElementById('speak-button');
+            if (speakBtn) {
+                speakBtn.addEventListener('click', toggleSpeech);
+            }
+            
+            // Load voices
+            if (speechSynthesis.onvoiceschanged !== undefined) {
+                speechSynthesis.onvoiceschanged = function() {
+                    console.log('Speech voices loaded');
+                };
+            }
+            
+            // Setup debug panel toggle
+            var toggleBtn = document.getElementById('toggle-debug');
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleDebugPanel);
+            }
+            
+            updateLoadingProgress(25, '載入模型配置', '準備 NFT 標記...');
+        });
+        
+        // Initialize debug controls
+        function initializeDebugControls() {
+            debugLog('Initializing debug control listeners', 'info');
+            
+            // Smooth Count slider
+            var smoothCountSlider = document.getElementById('smooth-count');
+            var smoothCountValue = document.getElementById('smooth-count-value');
+            if (smoothCountSlider && smoothCountValue) {
+                smoothCountSlider.addEventListener('input', function() {
+                    nftParams.smoothCount = parseInt(this.value);
+                    smoothCountValue.textContent = nftParams.smoothCount;
+                    updateNFTParameters();
+                });
+            }
+            
+            // Smooth Tolerance slider
+            var smoothToleranceSlider = document.getElementById('smooth-tolerance');
+            var smoothToleranceValue = document.getElementById('smooth-tolerance-value');
+            if (smoothToleranceSlider && smoothToleranceValue) {
+                smoothToleranceSlider.addEventListener('input', function() {
+                    nftParams.smoothTolerance = parseFloat(this.value);
+                    smoothToleranceValue.textContent = nftParams.smoothTolerance.toFixed(3);
+                    updateNFTParameters();
+                });
+            }
+            
+            // Smooth Threshold slider
+            var smoothThresholdSlider = document.getElementById('smooth-threshold');
+            var smoothThresholdValue = document.getElementById('smooth-threshold-value');
+            if (smoothThresholdSlider && smoothThresholdValue) {
+                smoothThresholdSlider.addEventListener('input', function() {
+                    nftParams.smoothThreshold = parseInt(this.value);
+                    smoothThresholdValue.textContent = nftParams.smoothThreshold;
+                    updateNFTParameters();
+                });
+            }
+            
+            // Confidence Threshold slider
+            var confidenceThresholdSlider = document.getElementById('confidence-threshold');
+            var confidenceThresholdValue = document.getElementById('confidence-threshold-value');
+            if (confidenceThresholdSlider && confidenceThresholdValue) {
+                confidenceThresholdSlider.addEventListener('input', function() {
+                    nftParams.confidenceThreshold = parseFloat(this.value);
+                    confidenceThresholdValue.textContent = nftParams.confidenceThreshold.toFixed(2);
+                    updateNFTParameters();
+                });
+            }
+            
+            // Camera Resolution selector
+            var cameraResolutionSelect = document.getElementById('camera-resolution');
+            if (cameraResolutionSelect) {
+                cameraResolutionSelect.addEventListener('change', function() {
+                    nftParams.cameraResolution = this.value;
+                    updateCameraResolution();
+                });
+            }
+            
+            debugLog('Debug controls initialized successfully', 'success');
+        }
+    </script>
+</body>
+</html>

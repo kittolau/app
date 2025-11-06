@@ -1,0 +1,15 @@
+{
+  "marker_type": "barcode",
+  "barcode_value": "1",
+  "personal_info": {
+    "name_zh": "加加林",
+    "nationality": "蘇聯（現俄羅斯）",
+    "main_mission":"人類首次載人太空飛行： 1961 年 4 月 12 日，加加林乘坐東方一號（Vostok 1）太空船，環繞地球軌道飛行了 108 分鐘，成為進入太空的第一人。這次任務標誌著人類探索太空的開端。",
+    "moto":[
+      "「Поехали!」（Poyekhali! - 出發吧！）： 這是他在東方一號發射升空時所說的，已成為太空探索時代的標誌性話語。",
+      "「我看到地球了！地球是藍色的。」： 這是他從太空中描述地球時的著名感嘆。"
+    ],
+    "youtube_video_src": "https://www.youtube.com/watch?v=cFoZhZ0Wlhg",
+    "birth_date": "1934 年 3 月 9 日 至 1968 年 3 月 27 日"
+  }
+}

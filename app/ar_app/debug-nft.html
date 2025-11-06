@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFT Debug Test</title>
+    <script src="lib/aframe.min.js"></script>
+    <script src="lib/aframe-ar.js"></script>
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; }
+        #debug-panel {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            z-index: 1000;
+            max-height: 300px;
+            overflow-y: auto;
+            font-size: 12px;
+        }
+        .log-entry {
+            margin: 2px 0;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        .log-info { background: rgba(0,100,200,0.3); }
+        .log-success { background: rgba(0,150,0,0.3); }
+        .log-error { background: rgba(200,0,0,0.3); }
+        .log-warn { background: rgba(200,150,0,0.3); }
+    </style>
+</head>
+<body>
+    <div id="debug-panel">
+        <strong>NFT Debug Console</strong>
+        <div id="debug-log"></div>
+    </div>
+    
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: true; detectionMode: mono_and_matrix; matrixCodeType: 3x3;' vr-mode-ui="enabled: false" renderer="colorManagement: true; physicallyCorrectLights: true;">
+        <!-- Simple NFT marker test -->
+        <a-nft
+            type="nft"
+            url="model/p_ylw/images"
+            smooth="true"
+            smoothCount="10"
+            smoothTolerance="0.01"
+            smoothThreshold="5">
+            
+            <!-- Just a simple box to show when tracking works -->
+            <a-box position="0 0.5 0" material="color: red;" scale="0.5 0.5 0.5"></a-box>
+        </a-nft>
+        
+        <a-entity camera></a-entity>
+    </a-scene>
+    
+    <script>
+        var debugLog = document.getElementById('debug-log');
+        var logCount = 0;
+        
+        function addLog(message, type) {
+            type = type || 'info';
+            logCount++;
+            var div = document.createElement('div');
+            div.className = 'log-entry log-' + type;
+            div.innerHTML = '[' + logCount + '] ' + new Date().toLocaleTimeString() + ' - ' + message;
+            debugLog.appendChild(div);
+            debugLog.scrollTop = debugLog.scrollHeight;
+            console.log(message);
+        }
+        
+        // Override console methods to capture AR.js logs
+        var originalLog = console.log;
+        var originalError = console.error;
+        var originalWarn = console.warn;
+        
+        console.log = function() {
+            var message = Array.prototype.slice.call(arguments).join(' ');
+            originalLog.apply(console, arguments);
+            if (message.includes('NFT') || message.includes('nft') || message.includes('tracking')) {
+                addLog(message, 'info');
+            }
+        };
+        
+        console.error = function() {
+            var message = Array.prototype.slice.call(arguments).join(' ');
+            originalError.apply(console, arguments);
+            addLog('ERROR: ' + message, 'error');
+        };
+        
+        console.warn = function() {
+            var message = Array.prototype.slice.call(arguments).join(' ');
+            originalWarn.apply(console, arguments);
+            addLog('WARN: ' + message, 'warn');
+        };
+        
+        // Monitor fetch requests for NFT files
+        var originalFetch = window.fetch;
+        window.fetch = function() {
+            var url = arguments[0];
+            if (typeof url === 'string' && (url.includes('.fset') || url.includes('.iset'))) {
+                addLog('🌐 Fetching NFT file: ' + url, 'info');
+                return originalFetch.apply(this, arguments)
+                    .then(function(response) {
+                        if (response.ok) {
+                            addLog('✅ NFT file loaded: ' + url + ' (size: ' + response.headers.get('content-length') + ' bytes)', 'success');
+                        } else {
+                            addLog('❌ NFT file failed: ' + url + ' - HTTP ' + response.status, 'error');
+                        }
+                        return response;
+                    })
+                    .catch(function(error) {
+                        addLog('❌ NFT fetch error: ' + url + ' - ' + error.message, 'error');
+                        throw error;
+                    });
+            }
+            return originalFetch.apply(this, arguments);
+        };
+        
+        addLog('🚀 NFT Debug Test Started', 'info');
+        
+        // Wait for A-Frame to initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            addLog('📄 DOM Content Loaded', 'info');
+            
+            setTimeout(function() {
+                addLog('🔍 Checking AR.js components...', 'info');
+                
+                if (typeof AFRAME !== 'undefined') {
+                    addLog('✅ A-Frame loaded', 'success');
+                } else {
+                    addLog('❌ A-Frame NOT loaded', 'error');
+                    return;
+                }
+                
+                if (AFRAME.components.arjs) {
+                    addLog('✅ AR.js component loaded', 'success');
+                } else {
+                    addLog('❌ AR.js component NOT loaded', 'error');
+                }
+                
+                if (AFRAME.components.nft) {
+                    addLog('✅ NFT component loaded', 'success');
+                } else {
+                    addLog('❌ NFT component NOT loaded', 'error');
+                }
+                
+                var nftMarker = document.querySelector('a-nft');
+                if (nftMarker) {
+                    addLog('✅ NFT marker found in DOM', 'success');
+                    addLog('   URL: ' + nftMarker.getAttribute('url'), 'info');
+                    
+                    // Listen for NFT events
+                    nftMarker.addEventListener('markerFound', function() {
+                        addLog('🎯 NFT Marker Found!', 'success');
+                    });
+                    
+                    nftMarker.addEventListener('markerLost', function() {
+                        addLog('🎯 NFT Marker Lost', 'warn');
+                    });
+                    
+                    nftMarker.addEventListener('componentinitialized', function(e) {
+                        if (e.detail.name === 'nft') {
+                            addLog('🖼️ NFT component initialized', 'success');
+                            addLog('   Data: ' + JSON.stringify(e.detail.component.data), 'info');
+                        }
+                    });
+                } else {
+                    addLog('❌ NFT marker NOT found in DOM', 'error');
+                }
+                
+            }, 2000);
+        });
+        
+        // Check AR.js initialization after scene loads
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                var scene = document.querySelector('a-scene');
+                if (scene && scene.systems && scene.systems.arjs) {
+                    addLog('✅ AR.js system initialized', 'success');
+                    if (scene.systems.arjs.nftManager) {
+                        addLog('✅ NFT Manager found', 'success');
+                    } else {
+                        addLog('⚠️ NFT Manager not found', 'warn');
+                    }
+                } else {
+                    addLog('❌ AR.js system NOT initialized', 'error');
+                }
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

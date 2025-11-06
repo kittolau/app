@@ -1,0 +1,10 @@
+{
+  "marker_type": "barcode",
+  "barcode_value": "2",
+  "introduction_info": {
+    "icon": "rocket",
+    "title": "長征二號 F 火箭",
+    "hk_narrative": "長征二號 F 運載火箭是中國專為載人航天工程研製的兩級半捆綁式運載火箭。它是中國目前唯一一款載人火箭，被譽為「神箭」。該火箭以其高可靠性和安全性著稱，頂部配備獨特的逃逸塔系統，能在火箭發射初期遇險時迅速將載人飛船帶離危險區域，保障航天員生命安全。長征二號 F 成功發射了所有「神舟」系列載人飛船，將楊利偉等多位中國航天員送入太空，並支持了中國空間站的建設任務，為中國成為第三個掌握載人航天技術的國家。",
+    "local_video_src": "https://www.youtube.com/watch?v=pahHgqItzBY"
+  }
+}

@@ -1,10 +1,17 @@
 {
-  "marker_type": "nft",
-  "nft_descriptor": "/app/ar_app/model/p_ylw/Yang_Liwei",
-  "model_file": "model.glb",
-  "size": 0.2,
-  "position": {"x": 0, "y": 0, "z": 0},
-  "rotation": {"x": 0, "y": 0, "z": 0},
+  "marker_type": "barcode",
+  "barcode_value": "1",
+  "personal_info": {
+    "name_zh": "楊利偉",
+    "nationality": "中華人民共和國",
+    "main_mission":"中國首次載人太空飛行： 2003 年 10 月 15 日，楊利偉搭乘神舟五號飛船進入太空，歷時 21 小時 23 分鐘，環繞地球 14 圈。他成為中國首位、也是亞洲第六位進入太空的太空人，使中國成為世界上第三個獨立掌握載人航太技術的國家。",
+    "moto":[
+      "「我感覺良好。」： 這是他在太空中向地面報告時常說的話，簡單而有力地傳達了任務順利的訊息。",
+      "「這是一次偉大的勝利……是我們祖國的驕傲。」： 他在完成任務後表達的自豪之情。"
+    ],
+    "youtube_video_src": "https://www.youtube.com/watch?v=DTDb3eKpPiw",
+    "birth_date": "1965 年 6 月 21 日"
+  },
   "desc_info": {
     "title": "Yang Liwei (楊利偉)",
     "youtube_video_src": "https://www.youtube.com/watch?v=DTDb3eKpPiw",

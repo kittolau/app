@@ -455,6 +455,348 @@
             font-size: 18px;
             font-weight: bold;
         }
+
+        /* Personal Info Card */
+        #personal-info-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.95) 0%, rgba(124, 58, 237, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(124, 58, 237, 0.6);
+            border-radius: 25px;
+            padding: 30px;
+            z-index: 1500;
+            display: none;
+            max-width: 95%;
+            width: 800px;
+            max-height: 80%;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(124, 58, 237, 0.5);
+            animation: slideInFromSpace 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes slideInFromSpace {
+            0% {
+                transform: translate(-50%, -50%) scale(0.3) rotateY(180deg);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1) rotateY(0deg);
+                opacity: 1;
+            }
+        }
+
+        .personal-info-header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(251, 191, 36, 0.3);
+            padding-bottom: 20px;
+        }
+
+        .personal-info-header .astronaut-icon {
+            display: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .personal-info-header h2 {
+            font-size: 2.2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .personal-info-header .nationality {
+            color: #e0e7ff;
+            font-size: 1.1em;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .personal-info-content {
+            color: #e0e7ff;
+            line-height: 1.7;
+        }
+
+        .mission-section {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .mission-section h3 {
+            color: #fbbf24;
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .mission-section p {
+            font-size: 1.05em;
+            line-height: 1.8;
+            text-align: justify;
+        }
+
+        .moto-section {
+            background: rgba(236, 72, 153, 0.1);
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .moto-section h3 {
+            color: #ec4899;
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .moto-item {
+            background: rgba(15, 23, 42, 0.6);
+            border-left: 4px solid #ec4899;
+            padding: 15px 20px;
+            margin: 12px 0;
+            border-radius: 0 10px 10px 0;
+            font-style: italic;
+            font-size: 1.05em;
+            position: relative;
+        }
+
+        .moto-item::before {
+            content: '"';
+            position: absolute;
+            left: -5px;
+            top: -10px;
+            font-size: 3em;
+            color: #ec4899;
+            font-family: serif;
+        }
+
+        .birth-info {
+            text-align: center;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 15px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #06b6d4;
+            font-weight: 600;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            background: rgba(239, 68, 68, 0.8);
+            color: white;
+            border: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .close-btn:hover {
+            background: rgba(239, 68, 68, 1);
+            transform: scale(1.1);
+        }
+
+        .video-section {
+            text-align: center;
+            margin: 25px 0 10px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(124, 58, 237, 0.3);
+        }
+
+        .personal-video-btn {
+            background: linear-gradient(135deg, #ec4899 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(236, 72, 153, 0.4);
+        }
+
+        .personal-video-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(236, 72, 153, 0.6);
+            background: linear-gradient(135deg, #f97316 0%, #dc2626 100%);
+        }
+
+        .personal-video-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        /* Introduction Info Card */
+        #introduction-info-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.95) 0%, rgba(16, 185, 129, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(6, 182, 212, 0.6);
+            border-radius: 25px;
+            padding: 30px;
+            z-index: 1500;
+            display: none;
+            max-width: 90%;
+            width: 600px;
+            max-height: 70%;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(6, 182, 212, 0.5);
+            animation: slideInFromSpace 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .intro-info-header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid rgba(251, 191, 36, 0.3);
+            padding-bottom: 20px;
+        }
+
+        .intro-icon {
+            font-size: 6em;
+            margin-bottom: 20px;
+            display: none;
+            animation: rocket-float 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.8));
+        }
+
+        .intro-icon.show {
+            display: block !important;
+        }
+
+        @keyframes rocket-float {
+            0%, 100% {
+                transform: translateY(0px) rotate(-10deg);
+            }
+            50% {
+                transform: translateY(-15px) rotate(-10deg);
+            }
+        }
+
+        .intro-info-header h2 {
+            font-size: 2em;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .intro-info-content {
+            color: #e0e7ff;
+            line-height: 1.7;
+        }
+
+        .intro-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .intro-speak-btn {
+            background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            min-width: 200px;
+            justify-content: center;
+        }
+
+        .intro-speak-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(124, 58, 237, 0.6);
+        }
+
+        .intro-speak-btn.speaking {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        }
+
+        .intro-speak-btn.speaking:hover {
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.6);
+        }
+
+        .intro-video-section {
+            width: 100%;
+            text-align: center;
+        }
+
+        .intro-video-btn {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(22, 163, 74, 0.4);
+            min-width: 200px;
+            justify-content: center;
+        }
+
+        .intro-video-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.6);
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .intro-speak-btn svg,
+        .intro-video-btn svg {
+            width: 18px;
+            height: 18px;
+        }
         
         #speak-button {
             position: fixed;
@@ -600,6 +942,65 @@
             .loading-content {
                 padding: 20px 15px;
             }
+            
+            /* Personal info card responsive */
+            #personal-info-card {
+                max-width: 95%;
+                max-height: 85%;
+                padding: 20px 15px;
+                border-radius: 20px;
+            }
+            
+            .personal-info-header h2 {
+                font-size: 1.8em;
+            }
+            
+            .mission-section,
+            .moto-section {
+                padding: 15px;
+                margin: 15px 0;
+            }
+            
+            .mission-section h3,
+            .moto-section h3 {
+                font-size: 1.2em;
+            }
+            
+            .close-btn {
+                top: 10px;
+                right: 15px;
+                width: 30px;
+                height: 30px;
+                font-size: 1em;
+            }
+            
+            .personal-video-btn {
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+            
+            /* Introduction info card responsive */
+            #introduction-info-card {
+                max-width: 95%;
+                width: auto;
+                padding: 20px 15px;
+            }
+            
+            .intro-icon {
+                font-size: 4em;
+                margin-bottom: 15px;
+            }
+            
+            .intro-info-header h2 {
+                font-size: 1.6em;
+            }
+            
+            .intro-speak-btn,
+            .intro-video-btn {
+                padding: 12px 25px;
+                font-size: 1em;
+                min-width: 180px;
+            }
         }
     </style>
 </head>
@@ -663,6 +1064,67 @@
     <!-- AR message when marker is detected -->
     <div id="ar-hover-message">
         <h3 id="model-title">Model Detected</h3>
+    </div>
+    
+    <!-- Personal Info Card for astronauts/personnel -->
+    <div id="personal-info-card">
+        <button class="close-btn" onclick="hidePersonalInfo()">×</button>
+        <div class="personal-info-header">
+            <span class="astronaut-icon">👨‍🚀</span>
+            <h2 id="person-name">太空人</h2>
+            <div class="nationality" id="person-nationality">國籍</div>
+        </div>
+        <div class="personal-info-content">
+            <div class="birth-info">
+                <span id="person-birth">出生日期</span>
+            </div>
+            <div class="mission-section">
+                <h3>🚀 主要任務</h3>
+                <p id="person-mission">主要任務描述</p>
+            </div>
+            <div class="moto-section">
+                <h3>💬 經典語錄</h3>
+                <div id="person-moto-list">
+                    <!-- Moto items will be populated by JavaScript -->
+                </div>
+            </div>
+            <div class="video-section" id="person-video-section" style="display: none;">
+                <button class="personal-video-btn" id="personal-video-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M8 5v14l11-7z"/>
+                    </svg>
+                    <span id="personal-video-text">觀看影片</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Introduction Info Card for missions/projects -->
+    <div id="introduction-info-card">
+        <button class="close-btn" onclick="hideIntroductionInfo()">×</button>
+        <div class="intro-info-header">
+            <div class="intro-icon" id="intro-icon" style="display: none;">🚀</div>
+            <h2 id="intro-title">項目介紹</h2>
+        </div>
+        <div class="intro-info-content">
+            <div class="intro-actions">
+                <button class="intro-speak-btn" id="intro-speak-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                    </svg>
+                    <span id="intro-speak-text">🔊 語音介紹</span>
+                </button>
+                
+                <div class="intro-video-section" id="intro-video-section" style="display: none;">
+                    <button class="intro-video-btn" id="intro-video-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M8 5v14l11-7z"/>
+                        </svg>
+                        <span id="intro-video-text">觀看影片</span>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
     
     <button id="speak-button">🔊 音頻解說</button>
@@ -1111,12 +1573,16 @@
                         orbitTilt: data.orbit_tilt || 0
                     };
                     
-                    // Cache description info
+                    // Cache description info and personal info
                     modelDescriptions[modelName] = {
                         title: data.desc_info ? data.desc_info.title || modelName : modelName,
                         hk_narrative: data.desc_info ? data.desc_info.hk_narrative || 'AR Model' : 'AR Model',
                         youtube_video_src: data.desc_info ? data.desc_info.youtube_video_src || null : null,
-                        local_video_src: data.desc_info ? data.desc_info.local_video_src || null : null
+                        local_video_src: data.desc_info ? data.desc_info.local_video_src || null : null,
+                        // Personal info for astronauts/personnel
+                        personal_info: data.personal_info || null,
+                        // Introduction info for missions/projects
+                        introduction_info: data.introduction_info || null
                     };
                     
                     console.log('✓ Cached config for:', modelName, '(Type:', data.marker_type || 'pattern', ', Model:', data.model_file || 'model.gltf', ')');
@@ -1415,8 +1881,8 @@
             if (markerType === 'barcode') {
                 // Barcode/QR marker
                 marker = document.createElement('a-marker');
-                marker.setAttribute('type', 'barcode');
-                marker.setAttribute('value', config.barcodeValue || '0');
+                marker.setAttribute('type', 'pattern');
+                marker.setAttribute('url', 'model/' + modelName + '/pattern-marker.patt');
                 console.log('Creating barcode marker for:', modelName);
             } else {
                 // Pattern marker (default)
@@ -1535,25 +2001,38 @@
             console.log('✅ Marker detected:', modelName, new Date().toLocaleTimeString());
             currentModel = modelName;
             
-            // Update AR message with model-specific info
-            updateARMessage(modelName);
+            // Get model description
+            var desc = modelDescriptions[modelName];
             
-            // Show overlay, speak button and hide instructions
-            var hoverMsg = document.getElementById('ar-hover-message');
-            var speakBtn = document.getElementById('speak-button');
+            // Check if this model has personal_info - show personal info card
+            if (desc && desc.personal_info) {
+                showPersonalInfo(modelName, desc.personal_info);
+            } 
+            // Check if this model has introduction_info - show introduction info card
+            else if (desc && desc.introduction_info) {
+                showIntroductionInfo(modelName, desc.introduction_info);
+            } 
+            // Otherwise show regular AR message
+            else {
+                // Update AR message with model-specific info
+                updateARMessage(modelName);
+                
+                // Show overlay, speak button and hide instructions
+                var hoverMsg = document.getElementById('ar-hover-message');
+                var speakBtn = document.getElementById('speak-button');
+                
+                if (hoverMsg) {
+                    hoverMsg.style.display = 'block';
+                }
+                if (speakBtn) {
+                    speakBtn.style.display = 'block';
+                }
+            }
+            
+            // Always show video buttons and hide instructions regardless of info type
             var youtubeBtn = document.getElementById('youtube-button');
             var videoBtn = document.getElementById('video-button');
             var instructions = document.getElementById('instructions');
-            
-            if (hoverMsg) {
-                hoverMsg.style.display = 'block';
-            }
-            if (speakBtn) {
-                speakBtn.style.display = 'block';
-            }
-            
-            // Get model description
-            var desc = modelDescriptions[modelName];
             
             // Show YouTube button if youtube_video_src exists
             if (youtubeBtn && desc && desc.youtube_video_src) {
@@ -1593,11 +2072,13 @@
                     speechSynthesis.cancel();
                 }
                 
-                // Hide overlay, speak button, video buttons and show instructions
+                // Hide overlay, speak button, video buttons, personal info card, introduction info card and show instructions
                 var hoverMsg = document.getElementById('ar-hover-message');
                 var speakBtn = document.getElementById('speak-button');
                 var youtubeBtn = document.getElementById('youtube-button');
                 var videoBtn = document.getElementById('video-button');
+                var personalInfoCard = document.getElementById('personal-info-card');
+                var introductionInfoCard = document.getElementById('introduction-info-card');
                 var instructions = document.getElementById('instructions');
                 
                 if (hoverMsg) {
@@ -1615,6 +2096,12 @@
                 if (videoBtn) {
                     videoBtn.style.display = 'none';
                     videoBtn.onclick = null;
+                }
+                if (personalInfoCard) {
+                    personalInfoCard.style.display = 'none';
+                }
+                if (introductionInfoCard) {
+                    introductionInfoCard.style.display = 'none';
                 }
                 if (instructions) {
                     instructions.style.display = 'block';
@@ -1732,6 +2219,322 @@
                 }
             } else if (currentModel) {
                 speakNarrative(currentModel);
+            }
+        }
+        
+        // Show personal info card for astronauts/personnel
+        function showPersonalInfo(modelName, personalInfo) {
+            var card = document.getElementById('personal-info-card');
+            var personName = document.getElementById('person-name');
+            var personNationality = document.getElementById('person-nationality');
+            var personBirth = document.getElementById('person-birth');
+            var personMission = document.getElementById('person-mission');
+            var personMotoList = document.getElementById('person-moto-list');
+            var videoSection = document.getElementById('person-video-section');
+            var videoBtn = document.getElementById('personal-video-btn');
+            var videoText = document.getElementById('personal-video-text');
+            
+            if (!card) return;
+            
+            // Update person name
+            if (personName && personalInfo.name_zh) {
+                personName.textContent = personalInfo.name_zh;
+            }
+            
+            // Update nationality
+            if (personNationality && personalInfo.nationality) {
+                personNationality.textContent = personalInfo.nationality;
+            }
+            
+            // Update birth date
+            if (personBirth && personalInfo.birth_date) {
+                personBirth.textContent = '出生: ' + personalInfo.birth_date;
+            }
+            
+            // Update mission
+            if (personMission && personalInfo.main_mission) {
+                personMission.textContent = personalInfo.main_mission;
+            }
+            
+            // Update moto/quotes
+            if (personMotoList && personalInfo.moto && personalInfo.moto.length > 0) {
+                personMotoList.innerHTML = '';
+                personalInfo.moto.forEach(function(quote) {
+                    var motoItem = document.createElement('div');
+                    motoItem.className = 'moto-item';
+                    motoItem.textContent = quote;
+                    personMotoList.appendChild(motoItem);
+                });
+            }
+            
+            // Handle video button - check for video sources
+            var desc = modelDescriptions[modelName];
+            var hasVideo = false;
+            var videoSrc = null;
+            var isYoutube = false;
+            
+            // Check personal_info first, then desc_info
+            if (personalInfo.local_video_src) {
+                hasVideo = true;
+                videoSrc = personalInfo.local_video_src;
+                isYoutube = false;
+            } else if (personalInfo.youtube_video_src) {
+                hasVideo = true;
+                videoSrc = personalInfo.youtube_video_src;
+                isYoutube = true;
+            } else if (desc && desc.local_video_src) {
+                hasVideo = true;
+                videoSrc = desc.local_video_src;
+                isYoutube = false;
+            } else if (desc && desc.youtube_video_src) {
+                hasVideo = true;
+                videoSrc = desc.youtube_video_src;
+                isYoutube = true;
+            }
+            
+            // Show/hide video section based on availability
+            if (videoSection) {
+                if (hasVideo) {
+                    videoSection.style.display = 'block';
+                    
+                    // Update button text
+                    if (videoText) {
+                        videoText.textContent = isYoutube ? '觀看 YouTube 影片' : '播放本地影片';
+                    }
+                    
+                    // Set up click handler
+                    if (videoBtn) {
+                        videoBtn.onclick = function() {
+                            if (isYoutube) {
+                                window.open(videoSrc, '_blank');
+                            } else {
+                                // For local video, you might want to implement a modal or redirect
+                                window.open(videoSrc, '_blank');
+                            }
+                        };
+                    }
+                } else {
+                    videoSection.style.display = 'none';
+                }
+            }
+            
+            // Show the card
+            card.style.display = 'block';
+            
+            console.log('✅ Personal info displayed for:', personalInfo.name_zh || modelName);
+        }
+        
+        // Hide personal info card
+        function hidePersonalInfo() {
+            var card = document.getElementById('personal-info-card');
+            if (card) {
+                card.style.display = 'none';
+            }
+        }
+
+        // Show introduction info card for missions/projects
+        function showIntroductionInfo(modelName, introductionInfo) {
+            var card = document.getElementById('introduction-info-card');
+            var introTitle = document.getElementById('intro-title');
+            var introIcon = document.getElementById('intro-icon');
+            var introSpeakBtn = document.getElementById('intro-speak-btn');
+            var introSpeakText = document.getElementById('intro-speak-text');
+            var videoSection = document.getElementById('intro-video-section');
+            var videoBtn = document.getElementById('intro-video-btn');
+            var videoText = document.getElementById('intro-video-text');
+            
+            if (!card) return;
+            
+            // Update title
+            if (introTitle && introductionInfo.title) {
+                introTitle.textContent = introductionInfo.title;
+            }
+            
+            // Handle icon display
+            if (introIcon) {
+                if (introductionInfo.icon) {
+                    // Map icon names to emojis
+                    var iconMap = {
+                        'rocket': '🚀',
+                        'satellite': '🛰️',
+                        'astronaut': '👨‍🚀',
+                        'moon': '🌙',
+                        'earth': '🌍',
+                        'mars': '🔴',
+                        'space': '🌌',
+                        'station': '🏗️'
+                    };
+                    
+                    var iconEmoji = iconMap[introductionInfo.icon] || '🚀'; // Default to rocket
+                    introIcon.textContent = iconEmoji;
+                    introIcon.classList.add('show');
+                } else {
+                    introIcon.classList.remove('show');
+                }
+            }
+            
+            // Set up speech button
+            if (introSpeakBtn && introductionInfo.hk_narrative) {
+                // Store the narrative for speech
+                introSpeakBtn.setAttribute('data-narrative', introductionInfo.hk_narrative);
+                introSpeakBtn.setAttribute('data-title', introductionInfo.title || modelName);
+                
+                // Set up click handler for speech
+                introSpeakBtn.onclick = function() {
+                    toggleIntroductionSpeech();
+                };
+            }
+            
+            // Handle video button - check for video sources
+            var hasVideo = false;
+            var videoSrc = null;
+            var isYoutube = false;
+            
+            // Check introduction_info for video sources
+            if (introductionInfo.local_video_src) {
+                hasVideo = true;
+                videoSrc = introductionInfo.local_video_src;
+                isYoutube = false;
+            } else if (introductionInfo.youtube_video_src) {
+                hasVideo = true;
+                videoSrc = introductionInfo.youtube_video_src;
+                isYoutube = true;
+            }
+            
+            // Show/hide video section based on availability
+            if (videoSection) {
+                if (hasVideo) {
+                    videoSection.style.display = 'block';
+                    
+                    // Update button text
+                    if (videoText) {
+                        videoText.textContent = isYoutube ? '觀看 YouTube 影片' : '播放本地影片';
+                    }
+                    
+                    // Set up click handler
+                    if (videoBtn) {
+                        videoBtn.onclick = function() {
+                            if (isYoutube) {
+                                window.open(videoSrc, '_blank');
+                            } else {
+                                // For local video, you might want to implement a modal or redirect
+                                window.open(videoSrc, '_blank');
+                            }
+                        };
+                    }
+                } else {
+                    videoSection.style.display = 'none';
+                }
+            }
+            
+            // Show the card
+            card.style.display = 'block';
+            
+            console.log('✅ Introduction info displayed for:', introductionInfo.title || modelName);
+        }
+
+        // Hide introduction info card
+        function hideIntroductionInfo() {
+            var card = document.getElementById('introduction-info-card');
+            if (card) {
+                card.style.display = 'none';
+            }
+            
+            // Stop any ongoing speech
+            if (speechSynthesis.speaking) {
+                speechSynthesis.cancel();
+            }
+            
+            // Reset speech button
+            var introSpeakBtn = document.getElementById('intro-speak-btn');
+            var introSpeakText = document.getElementById('intro-speak-text');
+            if (introSpeakBtn) {
+                introSpeakBtn.classList.remove('speaking');
+            }
+            if (introSpeakText) {
+                introSpeakText.textContent = '🔊 語音介紹';
+            }
+        }
+
+        // Toggle speech for introduction info
+        function toggleIntroductionSpeech() {
+            var introSpeakBtn = document.getElementById('intro-speak-btn');
+            var introSpeakText = document.getElementById('intro-speak-text');
+            
+            if (speechSynthesis.speaking) {
+                // Stop speaking
+                speechSynthesis.cancel();
+                if (introSpeakBtn) {
+                    introSpeakBtn.classList.remove('speaking');
+                }
+                if (introSpeakText) {
+                    introSpeakText.textContent = '🔊 語音介紹';
+                }
+            } else {
+                // Start speaking
+                var narrative = introSpeakBtn ? introSpeakBtn.getAttribute('data-narrative') : null;
+                var title = introSpeakBtn ? introSpeakBtn.getAttribute('data-title') : null;
+                
+                if (narrative) {
+                    // Stop any ongoing speech
+                    if (speechSynthesis.speaking) {
+                        speechSynthesis.cancel();
+                    }
+                    
+                    // Create utterance
+                    var utterance = new SpeechSynthesisUtterance(narrative);
+                    
+                    // Set language to Cantonese (Hong Kong)
+                    utterance.lang = 'zh-HK';
+                    
+                    // Try to find a Cantonese voice
+                    var voices = speechSynthesis.getVoices();
+                    var cantoneseVoice = voices.find(function(voice) {
+                        return voice.lang === 'zh-HK' || voice.lang.startsWith('zh-HK');
+                    });
+                    
+                    if (cantoneseVoice) {
+                        utterance.voice = cantoneseVoice;
+                    }
+                    
+                    // Set speech parameters
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1;
+                    utterance.volume = 1;
+                    
+                    // Update button state
+                    if (introSpeakBtn) {
+                        introSpeakBtn.classList.add('speaking');
+                    }
+                    if (introSpeakText) {
+                        introSpeakText.textContent = '⏹ 停止播放';
+                    }
+                    
+                    // Handle speech end
+                    utterance.onend = function() {
+                        if (introSpeakBtn) {
+                            introSpeakBtn.classList.remove('speaking');
+                        }
+                        if (introSpeakText) {
+                            introSpeakText.textContent = '🔊 語音介紹';
+                        }
+                    };
+                    
+                    // Handle speech error
+                    utterance.onerror = function(event) {
+                        console.error('Speech error:', event);
+                        if (introSpeakBtn) {
+                            introSpeakBtn.classList.remove('speaking');
+                        }
+                        if (introSpeakText) {
+                            introSpeakText.textContent = '🔊 語音介紹';
+                        }
+                    };
+                    
+                    // Speak
+                    speechSynthesis.speak(utterance);
+                    console.log('🔊 Speaking introduction:', title || 'Introduction');
+                }
             }
         }
         

@@ -1,0 +1,14 @@
+{
+  "marker_type": "barcode",
+  "barcode_value": "1",
+  "personal_info": {
+    "name_zh": "尼爾·岩士唐",
+    "nationality": "美國",
+    "main_mission":"人類首次登月： 作為阿波羅 11 號（Apollo 11）任務的指令長，岩士唐於 1969 年 7月 20 日成為第一位踏上月球的人類。他與同伴伯茲·艾德林在月球表面進行了約兩個半小時的艙外活動，採集了月岩樣本。",
+    "moto":[
+      "「That's one small step for [a] man, one giant leap for mankind.」（這對一個人來說是一小步，對人類來說卻是一大步。）： 這是他在踏上月球表面時所說的傳世名言，成為人類歷史上最著名的引言之一。"
+    ],
+    "youtube_video_src": "https://www.youtube.com/watch?v=8R-tVp5s2Ng",
+    "birth_date": "1930 年 8 月 5 日 至 2012 年 8 月 25 日"
+  }
+}

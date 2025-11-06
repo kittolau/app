@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GLTF 3D Model Viewer</title>
+  <style>
+    body {
+      margin: 0;
+      background: #181818;
+      color: #fff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+    h1 {
+      margin: 18px 0 8px 0;
+      font-size: 1.3em;
+      color: #90caf9;
+    }
+    .info {
+      margin-bottom: 8px;
+      color: #bbb;
+      font-size: 0.95em;
+    }
+    model-viewer {
+      width: 100vw;
+      height: 85vh;
+      background-color: #222;
+      --poster-color: #222;
+    }
+  </style>
+  <!-- Google's model-viewer - much easier and more reliable -->
+  <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+</head>
+<body>
+  <h1>GLTF 3D Model Preview</h1>
+  <div class="info">Model: <code>result.gltf</code> (with textures, if present)</div>
+  
+  <model-viewer 
+    src="https://kittolau.github.io/app/app/ar/2d23d/result.gltf" 
+    alt="3D Model"
+    auto-rotate 
+    camera-controls 
+    tone-mapping="neutral"
+    shadow-intensity="1"
+    loading="eager">
+  </model-viewer>
+</body>
+</html>

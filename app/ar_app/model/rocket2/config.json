@@ -1,0 +1,10 @@
+{
+  "marker_type": "barcode",
+  "barcode_value": "2",
+  "introduction_info": {
+    "icon": "rocket",
+    "title": "土星 5 號火箭",
+    "hk_narrative": "土星 5 號是美國為阿波羅載人登月計劃研製的超級重型運載火箭，於 1967 年 11 月 9 日首次發射。它至今仍保持著人類建造和發射過的最大、最重、推力最強大火箭的紀錄。土星 5 號共進行了 13 次發射，全部成功，其中 9 次搭載阿波羅飛船將航天員送往月球，並成功部署了「天空實驗室」空間站。",
+    "local_video_src": "https://www.youtube.com/watch?v=pahHgqItzBY"
+  }
+}
