@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>NFT Image Tracking Test - Yang Liwei</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- A-Frame and AR.js NFT -->
+    <script src="https://cdn.jsdelivr.net/gh/aframevr/aframe@1.6.0/dist/aframe-master.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar-nft.js"></script>
+    
+    <style>
+        .arjs-loader {
+            height: 100%;
+            width: 100%;
+            position: absolute;
+            top: 0;
+            left: 0;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .arjs-loader div {
+            text-align: center;
+            font-size: 1.25em;
+            color: white;
+        }
+        
+        /* Instructions overlay */
+        #instructions {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(30, 144, 255, 0.9);
+            color: #fff;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            z-index: 1500;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Status message */
+        #status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            z-index: 1000;
+            display: none;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .show-image-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fbbf24;
+            border: 1px solid #fbbf24;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        .show-image-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body style="margin: 0px; overflow: hidden;">
+    <!-- Minimal loader shown until image descriptors are loaded -->
+    <div class="arjs-loader">
+        <div>正在載入 NFT 圖像追蹤，請稍候...</div>
+    </div>
+    
+    <!-- Instructions overlay -->
+    <div id="instructions">
+        將相機對準 
+        <button class="show-image-btn" onclick="showYangLiweiImage()">楊利偉圖像</button>
+        以查看 AR 內容
+        <br><small>使用 NFT 自然特徵追蹤技術</small>
+    </div>
+    
+    <!-- Status Message -->
+    <div id="status"></div>
+    
+    <!-- AR Scene with NFT -->
+    <a-scene
+        vr-mode-ui="enabled: false;"
+        renderer="logarithmicDepthBuffer: true; precision: medium;"
+        embedded
+        arjs="trackingMethod: best; sourceType: webcam; debugUIEnabled: true; detectionMode: mono; matrixCodeType: 3x3;"
+        id="ar-scene">
+        
+        <!-- Assets -->
+        <a-assets>
+            <a-asset-item id="yang-liwei-model" src="/app/ar_app/model/p_ylw/model.glb"></a-asset-item>
+        </a-assets>
+        
+        <!-- NFT Marker using local Yang Liwei image files -->
+        <a-nft
+            type="nft"
+            url="/app/ar_app/model/p_ylw/Yang_Liwei"
+            smooth="true"
+            smoothCount="15"
+            smoothTolerance="0.02"
+            smoothThreshold="8"
+            id="yang-liwei-nft"
+            emitevents="true"
+            listener="true">
+            
+            <!-- 3D Model -->
+            <a-gltf-model
+                src="#yang-liwei-model"
+                scale="0.3 0.3 0.3"
+                position="0 0 0"
+                rotation="0 0 0"
+                animation="property: rotation; to: 0 360 0; dur: 10000; easing: linear; loop: true">
+            </a-gltf-model>
+            
+            <!-- Text label -->
+            <a-text 
+                value="Yang Liwei\n中國首位太空人\n楊利偉" 
+                position="0 50 0" 
+                align="center" 
+                color="#FFD700"
+                scale="30 30 30">
+            </a-text>
+            
+            <!-- Simple indicator box -->
+            <a-box 
+                position="0 -20 0" 
+                width="40" 
+                height="10" 
+                depth="40" 
+                color="#FF6B6B" 
+                opacity="0.8"
+                animation="property: rotation; to: 0 360 0; dur: 8000; easing: linear; loop: true">
+            </a-box>
+            
+        </a-nft>
+        
+        <!-- Camera -->
+        <a-entity camera></a-entity>
+    </a-scene>
+    
+    <script>
+        // Show status message
+        function showStatus(message, duration = 3000) {
+            var status = document.getElementById('status');
+            status.textContent = message;
+            status.style.display = 'block';
+            
+            if (duration > 0) {
+                setTimeout(() => {
+                    status.style.display = 'none';
+                }, duration);
+            }
+        }
+        
+        // Show Yang Liwei target image
+        function showYangLiweiImage() {
+            var popup = createImagePopup(
+                'Yang Liwei Target Image',
+                '/app/ar_app/model/p_ylw/Yang_Liwei.jpg',
+                '將相機對準此楊利偉圖像以查看 AR 內容'
+            );
+            document.body.appendChild(popup);
+        }
+        
+        // Create image popup
+        function createImagePopup(title, imageSrc, description) {
+            var popup = document.createElement('div');
+            popup.style.cssText = `
+                position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                background: rgba(0,0,0,0.9); padding: 20px; border-radius: 10px;
+                z-index: 3000; max-width: 80%; max-height: 80%;
+            `;
+            
+            var titleEl = document.createElement('h3');
+            titleEl.textContent = title;
+            titleEl.style.cssText = 'color: white; text-align: center; margin: 0 0 15px 0;';
+            
+            var img = document.createElement('img');
+            img.src = imageSrc;
+            img.style.cssText = 'max-width: 100%; max-height: 50vh; border-radius: 5px; display: block; margin: 0 auto;';
+            img.onerror = function() {
+                img.src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iIzMzMzMzMyIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPllhbmcgTGl3ZWkgSW1hZ2U8L3RleHQ+PC9zdmc+';
+            };
+            
+            var desc = document.createElement('p');
+            desc.textContent = description;
+            desc.style.cssText = 'color: #93c5fd; text-align: center; margin: 15px 0; font-size: 14px;';
+            
+            var instructions = document.createElement('p');
+            instructions.innerHTML = '<strong>NFT 使用說明：</strong><br>• 確保圖像清晰可見<br>• 保持相機穩定<br>• 等待圖像加載完成';
+            instructions.style.cssText = 'color: #fbbf24; text-align: left; margin: 15px 0; font-size: 12px; background: rgba(0,0,0,0.5); padding: 10px; border-radius: 5px;';
+            
+            var closeBtn = document.createElement('button');
+            closeBtn.textContent = '關閉';
+            closeBtn.style.cssText = `
+                display: block; margin: 15px auto 0; padding: 8px 16px;
+                background: #fff; border: none; border-radius: 5px; cursor: pointer;
+            `;
+            closeBtn.onclick = function() { document.body.removeChild(popup); };
+            
+            popup.appendChild(titleEl);
+            popup.appendChild(img);
+            popup.appendChild(desc);
+            popup.appendChild(instructions);
+            popup.appendChild(closeBtn);
+            
+            return popup;
+        }
+        
+        // Initialize NFT AR
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 NFT Image Tracking initializing...');
+            console.log('📂 NFT files should be at: /app/ar_app/model/p_ylw/Yang_Liwei.*');
+            console.log('🔗 Testing NFT file access...');
+            
+            // Test if NFT files are accessible
+            fetch('/app/ar_app/model/p_ylw/Yang_Liwei.fset')
+                .then(response => {
+                    if (response.ok) {
+                        console.log('✅ NFT .fset file is accessible');
+                        showStatus('✅ NFT 文件可訪問', 2000);
+                    } else {
+                        console.error('❌ NFT .fset file not accessible:', response.status);
+                        showStatus('❌ NFT 文件無法訪問', 3000);
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error testing NFT file:', error);
+                });
+            
+            var scene = document.querySelector('a-scene');
+            
+            // Add AR.js system events
+            scene.addEventListener('arjs-nft-loaded', function(e) {
+                console.log('🎯 AR.js NFT system loaded!', e);
+                showStatus('✅ NFT 系統已載入', 2000);
+            });
+            
+            scene.addEventListener('arjs-nft-init-data', function(e) {
+                console.log('📊 NFT data initialized!', e);
+                showStatus('✅ NFT 數據初始化完成', 2000);
+            });
+            
+            // Scene loaded event
+            scene.addEventListener('loaded', function() {
+                console.log('✓ A-Frame scene loaded');
+                console.log('🔍 Searching for NFT entity...');
+                
+                // Setup NFT events
+                var nftEntity = document.querySelector('#yang-liwei-nft');
+                if (nftEntity) {
+                    console.log('✓ NFT entity found, setting up events...');
+                    
+                    // NFT tracking found
+                    nftEntity.addEventListener('trackingFound', function() {
+                        console.log('🎯 TRACKING FOUND EVENT TRIGGERED!');
+                        
+                        // Show alert prompt for successful detection
+                        alert('🎉 圖像偵測成功！\n楊利偉圖像已被成功識別，AR 內容現在顯示中。');
+                        
+                        showStatus('✅ 楊利偉圖像偵測到！AR 內容顯示中', 0);
+                        document.getElementById('instructions').style.display = 'none';
+                    });
+                    
+                    // NFT tracking lost
+                    nftEntity.addEventListener('trackingLost', function() {
+                        console.log('⚠️ TRACKING LOST EVENT TRIGGERED!');
+                        showStatus('❌ 圖像追蹤丟失，請重新對準楊利偉圖像', 3000);
+                        document.getElementById('instructions').style.display = 'block';
+                    });
+                    
+                    // Additional event listeners for debugging
+                    nftEntity.addEventListener('markerFound', function() {
+                        console.log('🟢 MARKER FOUND EVENT!');
+                        alert('🎯 標記找到！NFT 偵測成功！');
+                        showStatus('✅ NFT 標記找到！', 0);
+                    });
+                    
+                    nftEntity.addEventListener('markerLost', function() {
+                        console.log('🔴 MARKER LOST EVENT!');
+                        showStatus('❌ NFT 標記丟失', 2000);
+                    });
+                    
+                } else {
+                    console.error('❌ NFT entity not found');
+                    showStatus('❌ NFT 實體未找到', 5000);
+                }
+                
+                console.log('✓ NFT events configured');
+                
+                // Hide loader after scene is ready
+                setTimeout(function() {
+                    var loader = document.querySelector('.arjs-loader');
+                    if (loader) {
+                        loader.style.display = 'none';
+                    }
+                }, 2000);
+            });
+            
+            // Request camera permission
+            navigator.mediaDevices.getUserMedia({ video: true })
+                .then(function(stream) {
+                    console.log('✓ Camera permission granted');
+                    stream.getTracks().forEach(track => track.stop());
+                    showStatus('✅ 相機權限已授予，準備 NFT 圖像追蹤！', 3000);
+                })
+                .catch(function(error) {
+                    console.error('❌ Camera permission denied:', error);
+                    showStatus('❌ 需要相機權限才能使用 NFT 追蹤', 5000);
+                });
+        });
+    </script>
+</body>
+</html>
