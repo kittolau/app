@@ -45,11 +45,11 @@ async function compressGlb(filePath) {
         const results = await processGlb(glb, {
             dracoOptions: {
                 compressionLevel: 10, // Maximum compression (0-10)
-                quantizePositionBits: 14,
-                quantizeNormalBits: 10,
-                quantizeTexcoordBits: 12,
+                quantizePositionBits: 11,  // Reduced for more compression (was 14)
+                quantizeNormalBits: 8,      // Reduced for more compression (was 10)
+                quantizeTexcoordBits: 10,   // Reduced for more compression (was 12)
                 quantizeColorBits: 8,
-                quantizeGenericBits: 12,
+                quantizeGenericBits: 8,     // Reduced for more compression (was 12)
                 unifiedQuantization: true
             },
             separate: false, // Keep as GLB (not separate files)

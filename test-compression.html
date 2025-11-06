@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compression Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #1a1a2e;
+            color: #eee;
+        }
+        h1 {
+            color: #16213e;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+        }
+        .test-results {
+            background: #16213e;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .model-test {
+            background: #0f3460;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .success {
+            color: #4ecca3;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ffd93d;
+            font-weight: bold;
+        }
+        .error {
+            color: #ff6b6b;
+            font-weight: bold;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .stat-box {
+            background: #16213e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4ecca3;
+        }
+        .stat-label {
+            color: #aaa;
+            font-size: 14px;
+        }
+        code {
+            background: #0f3460;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+        }
+        pre {
+            background: #0f3460;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 GLB Compression Test</h1>
+    
+    <p>This page tests if gzip compression is working for GLB files by checking the HTTP headers.</p>
+    
+    <button onclick="testCompression()">🚀 Run Compression Test</button>
+    <button onclick="testAllModels()">📦 Test All Models</button>
+    <button onclick="clearResults()">🧹 Clear Results</button>
+    
+    <div class="stats" id="stats" style="display:none">
+        <div class="stat-box">
+            <div class="stat-label">Total Models</div>
+            <div class="stat-value" id="stat-total">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Compressed</div>
+            <div class="stat-value" id="stat-compressed">0</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Total Saved</div>
+            <div class="stat-value" id="stat-saved">0 KB</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-label">Avg Reduction</div>
+            <div class="stat-value" id="stat-percent">0%</div>
+        </div>
+    </div>
+    
+    <div class="test-results" id="results"></div>
+
+    <script>
+        const models = [
+            'app/ar_app/model/sputnik1/sputnik1.glb',
+            'app/ar_app/model/beidou/beidou.glb',
+            'app/ar_app/model/dongfanghong1/dongfanghong1.glb',
+            'app/ar_app/model/tiangong_space_station/tiangongspacestation.glb',
+            'app/ar_app/model/tiangong_space_station/earth.glb',
+            'app/ar_app/model/international_space_station/ISS_stationary.glb',
+        ];
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+        }
+
+        async function testModel(url) {
+            const resultsDiv = document.getElementById('results');
+            const modelDiv = document.createElement('div');
+            modelDiv.className = 'model-test';
+            
+            const modelName = url.split('/').pop();
+            modelDiv.innerHTML = `<h3>🔍 Testing: ${modelName}</h3><p>Loading...</p>`;
+            resultsDiv.appendChild(modelDiv);
+
+            try {
+                // Fetch with explicit gzip request
+                const response = await fetch(url, {
+                    headers: {
+                        'Accept-Encoding': 'gzip, deflate'
+                    }
+                });
+
+                const contentEncoding = response.headers.get('Content-Encoding');
+                const contentLength = response.headers.get('Content-Length');
+                const contentType = response.headers.get('Content-Type');
+                
+                // Get the actual data to measure real size
+                const blob = await response.blob();
+                const actualSize = blob.size;
+
+                let status = '';
+                let cssClass = '';
+                
+                if (contentEncoding && contentEncoding.includes('gzip')) {
+                    status = '✅ COMPRESSED';
+                    cssClass = 'success';
+                } else {
+                    status = '⚠️ NOT COMPRESSED';
+                    cssClass = 'warning';
+                }
+
+                modelDiv.innerHTML = `
+                    <h3>📦 ${modelName}</h3>
+                    <p class="${cssClass}">${status}</p>
+                    <pre>Response Headers:
+Content-Type: ${contentType || 'not set'}
+Content-Encoding: ${contentEncoding || 'none (not compressed!)'}
+Content-Length: ${contentLength || 'not set'}
+
+Actual Size: ${formatBytes(actualSize)}
+Status: ${response.status} ${response.statusText}</pre>
+                `;
+
+                return {
+                    name: modelName,
+                    compressed: !!contentEncoding,
+                    size: actualSize,
+                    contentLength: parseInt(contentLength) || actualSize,
+                    encoding: contentEncoding
+                };
+            } catch (error) {
+                modelDiv.innerHTML = `
+                    <h3>📦 ${modelName}</h3>
+                    <p class="error">❌ ERROR</p>
+                    <pre>${error.message}</pre>
+                `;
+                return { name: modelName, error: true };
+            }
+        }
+
+        async function testCompression() {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<h2>🧪 Testing Sputnik1...</h2>';
+            
+            await testModel('app/ar_app/model/sputnik1/sputnik1.glb');
+        }
+
+        async function testAllModels() {
+            const resultsDiv = document.getElementById('results');
+            const statsDiv = document.getElementById('stats');
+            
+            resultsDiv.innerHTML = '<h2>🧪 Testing All Models...</h2>';
+            statsDiv.style.display = 'grid';
+            
+            const results = [];
+            
+            for (const model of models) {
+                const result = await testModel(model);
+                if (!result.error) {
+                    results.push(result);
+                }
+            }
+
+            // Calculate stats
+            const compressed = results.filter(r => r.compressed).length;
+            const totalSize = results.reduce((sum, r) => sum + r.size, 0);
+            const totalUncompressed = results.reduce((sum, r) => sum + (r.contentLength || r.size), 0);
+            const saved = totalUncompressed - totalSize;
+            const avgPercent = saved > 0 ? ((saved / totalUncompressed) * 100).toFixed(1) : 0;
+
+            document.getElementById('stat-total').textContent = results.length;
+            document.getElementById('stat-compressed').textContent = compressed;
+            document.getElementById('stat-saved').textContent = formatBytes(saved);
+            document.getElementById('stat-percent').textContent = avgPercent + '%';
+
+            // Add summary
+            const summaryDiv = document.createElement('div');
+            summaryDiv.className = 'model-test';
+            summaryDiv.style.background = '#1a472a';
+            summaryDiv.innerHTML = `
+                <h2>📊 Summary</h2>
+                <p class="success">✅ Tested ${results.length} models</p>
+                <p>Compressed: ${compressed} / ${results.length}</p>
+                <p>Total bandwidth saved: ${formatBytes(saved)} (${avgPercent}%)</p>
+                ${compressed === results.length ? 
+                    '<p class="success">🎉 All models are being compressed!</p>' :
+                    '<p class="warning">⚠️ Some models are not compressed</p>'
+                }
+            `;
+            resultsDiv.appendChild(summaryDiv);
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('stats').style.display = 'none';
+        }
+
+        // Show instructions
+        document.getElementById('results').innerHTML = `
+            <h2>📝 Instructions</h2>
+            <ol>
+                <li>Make sure the production server is running: <code>npm run prod</code></li>
+                <li>Click "Run Compression Test" to test one model</li>
+                <li>Click "Test All Models" to test all models</li>
+                <li>Check for "Content-Encoding: gzip" in the results</li>
+            </ol>
+            <h3>Expected Results</h3>
+            <p>If compression is working, you should see:</p>
+            <pre>Content-Encoding: gzip
+✅ COMPRESSED</pre>
+            <p>If not working:</p>
+            <pre>Content-Encoding: none (not compressed!)
+⚠️ NOT COMPRESSED</pre>
+        `;
+    </script>
+</body>
+</html>
