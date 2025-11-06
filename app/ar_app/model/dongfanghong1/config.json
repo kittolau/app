@@ -13,7 +13,7 @@
   "model_file": "dongfanghong1-2.glb",
   "desc_info": {
     "title": "東方紅一號",
-    "local_video_src": "/app/mp4_player/?video=https://download.samplelib.com/mp4/sample-5s.mp4",
+    "local_video_src": "../mp4_player/index.html?video=東方紅一號.mp4",
     "hk_narrative": "東方紅一號是中國於 1970 年 4 月 24 日成功發射的第一顆人造地球衛星，這使中國成為世界上第五個獨立發射衛星的國家。它的主要任務是在太空中向全球播放樂曲《東方紅》，並進行衛星技術試驗。這次成功的發射是中國航太史上的重要里程碑，標誌著中國正式進入太空時代，為後續的太空探索奠定了堅實基礎。"
   }
 }

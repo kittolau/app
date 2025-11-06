@@ -9,7 +9,9 @@
       "「我感覺良好。」： 這是他在太空中向地面報告時常說的話，簡單而有力地傳達了任務順利的訊息。",
       "「這是一次偉大的勝利……是我們祖國的驕傲。」： 他在完成任務後表達的自豪之情。"
     ],
-    "local_video_src": "Yang Liwei",
-    "birth_date": "1965 年 6 月 21 日"
+    "local_video_src": "../mp4_player/index.html?video=楊利偉升空.mp4",
+    "birth_date": "1965 年 6 月 21 日",
+    "selfie_url": "../selfie_app/index.html"
   }
+
 }

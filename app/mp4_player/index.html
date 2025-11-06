@@ -277,9 +277,16 @@
         
         <div class="usage-guide">
             <h3>📖 How to use:</h3>
-            <p>Add <code>?video=YOUR_VIDEO_URL</code> to the page URL</p>
-            <p style="margin-top: 8px; font-size: 13px; color: #666;">
-                Example: <code>index.html?video=https://example.com/video.mp4</code>
+            <p><strong>Local videos:</strong> <code>?video=FILENAME.mp4</code></p>
+            <p style="margin-top: 8px; font-size: 13px; color: #81c784;">
+                Example: <code>?video=東方紅一號.mp4</code>
+            </p>
+            <p style="margin-top: 12px;"><strong>External videos:</strong> <code>?video=FULL_URL</code></p>
+            <p style="margin-top: 8px; font-size: 13px; color: #81c784;">
+                Example: <code>?video=https://example.com/video.mp4</code>
+            </p>
+            <p style="margin-top: 15px; font-size: 12px; color: #999;">
+                Available local videos: 東方紅一號.mp4, 楊利偉升空.mp4, 龍飛船升空.mp4, 土星5號.mp4, 長征火箭升空 (用1).mp4, 長征二號F火箭 (用2).mp4
             </p>
         </div>
     </div>
@@ -288,7 +295,21 @@
         // Get video URL from query string
         function getVideoURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get('video');
+            const videoParam = urlParams.get('video');
+            
+            if (!videoParam) {
+                return null;
+            }
+            
+            // Check if it's already a full URL (starts with http/https)
+            if (videoParam.startsWith('http://') || videoParam.startsWith('https://')) {
+                return videoParam;
+            }
+            
+            // If it's a local filename, construct the relative path to video folder
+            // Remove any path separators from the beginning
+            const cleanFilename = videoParam.replace(/^[\/\\]+/, '');
+            return `../../asset/video/${cleanFilename}`;
         }
         
         // Format duration from seconds to MM:SS or HH:MM:SS
@@ -316,6 +337,11 @@
             document.getElementById('error-message').classList.add('show');
             document.getElementById('error-text').textContent = message;
             document.getElementById('video-title').textContent = 'Error';
+            
+            // Show usage guide if no video parameter provided
+            if (message.includes('No video URL provided')) {
+                document.querySelector('.usage-guide').style.display = 'block';
+            }
         }
         
         // Initialize video player
@@ -323,16 +349,18 @@
             const videoURL = getVideoURL();
             
             if (!videoURL) {
-                showError('No video URL provided. Please add ?video=YOUR_VIDEO_URL to the page URL.');
+                showError('No video specified. Please add ?video=FILENAME.mp4 or ?video=FULL_URL to the page URL.');
                 return;
             }
             
-            // Validate URL format
-            try {
-                new URL(videoURL);
-            } catch (e) {
-                showError('Invalid video URL format. Please provide a valid URL.');
-                return;
+            // Validate URL format (only for external URLs)
+            if (videoURL.startsWith('http://') || videoURL.startsWith('https://')) {
+                try {
+                    new URL(videoURL);
+                } catch (e) {
+                    showError('Invalid video URL format. Please provide a valid URL.');
+                    return;
+                }
             }
             
             const videoPlayer = document.getElementById('video-player');
@@ -349,8 +377,24 @@
             videoPlayer.addEventListener('loadedmetadata', function() {
                 document.getElementById('loading').style.display = 'none';
                 document.getElementById('video-wrapper').style.display = 'flex';
+                document.getElementById('info-section').style.display = 'block';
                 
-                document.getElementById('video-title').textContent = 'Video ready to play';
+                // Set video title based on source
+                const urlParams = new URLSearchParams(window.location.search);
+                const originalParam = urlParams.get('video');
+                
+                if (originalParam && !originalParam.startsWith('http')) {
+                    // Local video - show filename
+                    document.getElementById('video-title').textContent = `🎬 ${originalParam}`;
+                } else {
+                    // External video - show generic title
+                    document.getElementById('video-title').textContent = '🎬 Video Player';
+                }
+                
+                // Update duration info
+                const duration = formatDuration(videoPlayer.duration);
+                document.getElementById('video-duration').textContent = duration;
+                document.getElementById('video-status').textContent = 'Ready to play';
                 
                 console.log('✅ Video loaded successfully');
                 

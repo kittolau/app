@@ -658,6 +658,38 @@
             width: 20px;
             height: 20px;
         }
+        
+        .selfie-section {
+            text-align: center;
+            margin: 15px 0 10px;
+        }
+
+        .personal-selfie-btn {
+            background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 15px;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+
+        .personal-selfie-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(16, 185, 129, 0.6);
+            background: linear-gradient(135deg, #059669 0%, #0891b2 100%);
+        }
+
+        .personal-selfie-btn svg {
+            width: 20px;
+            height: 20px;
+        }
 
         /* Introduction Info Card */
         #introduction-info-card {
@@ -979,6 +1011,11 @@
                 font-size: 1em;
             }
             
+            .personal-selfie-btn {
+                padding: 12px 25px;
+                font-size: 1em;
+            }
+            
             /* Introduction info card responsive */
             #introduction-info-card {
                 max-width: 95%;
@@ -1244,6 +1281,14 @@
                         <path d="M8 5v14l11-7z"/>
                     </svg>
                     <span id="personal-video-text">觀看影片</span>
+                </button>
+            </div>
+            <div class="selfie-section" id="person-selfie-section" style="display: block;">
+                <button class="personal-selfie-btn" id="personal-selfie-btn">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2C13.1 2 14 2.9 14 4C14 5.1 13.1 6 12 6C10.9 6 10 5.1 10 4C10 2.9 10.9 2 12 2ZM21 9V7L15 13L11.5 9.5L9 12L6 9H4V9C4 10.1 4.9 11 6 11H7L8 10L11.5 13.5L15 10L19 14V17C19 18.1 18.1 19 17 19H7C5.9 19 5 18.1 5 17V15L8 12L11.5 15.5L15 12L21 18V20C21 21.1 20.1 22 19 22H5C3.9 22 3 21.1 3 20V9C3 7.9 3.9 7 5 7H7.83L9 5.83C9.39 5.44 9.89 5.17 10.44 5.05L12 5L13.56 5.05C14.11 5.17 14.61 5.44 15 5.83L16.17 7H19C20.1 7 21 7.9 21 9Z"/>
+                    </svg>
+                    <span id="personal-selfie-text">合照</span>
                 </button>
             </div>
         </div>
@@ -2418,6 +2463,8 @@
             var videoSection = document.getElementById('person-video-section');
             var videoBtn = document.getElementById('personal-video-btn');
             var videoText = document.getElementById('personal-video-text');
+            var selfieSection = document.getElementById('person-selfie-section');
+            var selfieBtn = document.getElementById('personal-selfie-btn');
             
             if (!card) return;
             
@@ -2501,6 +2548,30 @@
                 } else {
                     videoSection.style.display = 'none';
                 }
+            }
+            
+            // Handle selfie button - check for selfie URL
+            console.log('🔍 Checking selfie section:', selfieSection);
+            console.log('🔍 Selfie URL:', personalInfo.selfie_url);
+            
+            if (selfieSection) {
+                if (personalInfo.selfie_url) {
+                    console.log('✅ Showing selfie button');
+                    selfieSection.style.display = 'block';
+                    
+                    // Set up click handler for selfie button
+                    if (selfieBtn) {
+                        selfieBtn.onclick = function() {
+                            console.log('🔗 Opening selfie URL:', personalInfo.selfie_url);
+                            window.open(personalInfo.selfie_url, '_blank');
+                        };
+                    }
+                } else {
+                    console.log('❌ No selfie URL found, hiding selfie button');
+                    selfieSection.style.display = 'none';
+                }
+            } else {
+                console.log('❌ Selfie section element not found');
             }
             
             // Show the card
