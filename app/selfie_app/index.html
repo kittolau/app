@@ -170,6 +170,10 @@
             background: linear-gradient(135deg, #FF6B6B 0%, #FF1493 100%);
         }
         
+        .filter-btn.person {
+            background: linear-gradient(135deg, #4CAF50 0%, #2196F3 100%);
+        }
+        
         /* Control buttons */
         .controls {
             position: absolute;
@@ -393,6 +397,7 @@
             <button class="filter-btn crown" data-filter="crown" title="Crown">👑</button>
             <button class="filter-btn bunny" data-filter="bunny" title="Bunny Ears">🐰</button>
             <button class="filter-btn heart" data-filter="heart" title="Hearts">💕</button>
+            <button class="filter-btn person" data-filter="person" title="Person Selfie">👤</button>
         </div>
         
         <!-- Controls -->
@@ -419,12 +424,49 @@
         let currentFilter = 'none';
         let facingMode = 'user'; // 'user' = front camera, 'environment' = back camera
         let detectedFaces = [];
+        let config = null; // Store app configuration
+        
+        // Load the person image
+        const personImage = new Image();
+        personImage.src = 'p1-min.png';
+        personImage.onload = () => console.log('Person image loaded successfully');
+        personImage.onerror = () => console.error('Failed to load person image');
+        
+        // Load configuration
+        async function loadConfig() {
+            try {
+                const response = await fetch('config.json');
+                config = await response.json();
+                console.log('✅ Config loaded:', config);
+                
+                // Update person image source if specified in config
+                if (config.person_filter?.image_path) {
+                    personImage.src = config.person_filter.image_path;
+                }
+            } catch (error) {
+                console.warn('⚠️ Could not load config.json, using defaults:', error);
+                // Set default config
+                config = {
+                    person_filter: {
+                        size: { scale: 0.8 },
+                        position: { horizontal_offset: 0.6, vertical_offset: 0 },
+                        effects: { 
+                            glow: { enabled: true, color: "rgba(100, 200, 255, 0.5)", blur: 10 }
+                        },
+                        display: { maintain_aspect_ratio: true }
+                    }
+                };
+            }
+        }
         
         // Initialize on page load
         window.addEventListener('load', init);
         
         async function init() {
             try {
+                // Load configuration first
+                await loadConfig();
+                
                 // Get DOM elements
                 video = document.getElementById('video');
                 canvas = document.getElementById('canvas');
@@ -565,6 +607,9 @@
                 case 'heart':
                     drawHearts(mirroredX, y - height * 0.5, width);
                     break;
+                case 'person':
+                    drawPerson(mirroredX, y, width);
+                    break;
                 case 'none':
                 default:
                     // No filter
@@ -690,6 +735,53 @@
             ctx.closePath();
             ctx.fill();
             ctx.stroke();
+            
+            ctx.restore();
+        }
+        
+        // Draw person image next to face
+        function drawPerson(x, y, size) {
+            if (!personImage.complete || !config) return; // Don't draw if image not loaded or no config
+            
+            const personConfig = config.person_filter;
+            
+            // Calculate image size based on config
+            const imageWidth = size * (personConfig.size?.scale || 0.8);
+            const imageHeight = personConfig.display?.maintain_aspect_ratio !== false 
+                ? (personImage.height / personImage.width) * imageWidth
+                : imageWidth; // Square if aspect ratio not maintained
+            
+            // Calculate position based on config
+            const horizontalOffset = size * (personConfig.position?.horizontal_offset || 0.6);
+            const verticalOffset = size * (personConfig.position?.vertical_offset || 0);
+            
+            const imageX = x + horizontalOffset;
+            const imageY = y + verticalOffset - imageHeight / 2; // Center vertically with face
+            
+            ctx.save();
+            
+            // Apply glow effect if enabled
+            if (personConfig.effects?.glow?.enabled) {
+                const glow = personConfig.effects.glow;
+                ctx.shadowColor = glow.color || 'rgba(100, 200, 255, 0.5)';
+                ctx.shadowBlur = glow.blur || 10;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+            }
+            
+            // Apply shadow effect if enabled
+            if (personConfig.effects?.shadow?.enabled) {
+                const shadow = personConfig.effects.shadow;
+                if (!personConfig.effects?.glow?.enabled) { // Don't override glow
+                    ctx.shadowColor = shadow.color || 'rgba(0, 0, 0, 0.3)';
+                    ctx.shadowBlur = shadow.blur || 5;
+                    ctx.shadowOffsetX = shadow.offset_x || 2;
+                    ctx.shadowOffsetY = shadow.offset_y || 2;
+                }
+            }
+            
+            // Draw the person image
+            ctx.drawImage(personImage, imageX, imageY, imageWidth, imageHeight);
             
             ctx.restore();
         }

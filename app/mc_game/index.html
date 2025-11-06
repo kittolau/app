@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>太空知識挑戰</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            min-height: 100vh;
+            transition: background 0.8s ease;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Animated Stars Background */
+        .stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle linear infinite;
+        }
+
+        @keyframes twinkle {
+            0%, 100% {
+                opacity: 0.3;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.2);
+            }
+        }
+
+        /* Game Container */
+        .game-container {
+            position: relative;
+            z-index: 10;
+            max-width: 600px;
+            width: 90%;
+            padding: 40px;
+            background: linear-gradient(135deg, 
+                rgba(30, 58, 138, 0.2) 0%, 
+                rgba(15, 23, 42, 0.3) 50%, 
+                rgba(30, 58, 138, 0.2) 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 40px rgba(251, 191, 36, 0.15);
+            color: white;
+            text-align: center;
+            animation: float-in 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        @keyframes float-in {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) translateY(20px);
+                filter: blur(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+                filter: blur(0);
+            }
+        }
+
+        /* Header */
+        .game-header {
+            margin-bottom: 30px;
+        }
+
+        .game-icon {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            animation: icon-pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.8));
+        }
+
+        @keyframes icon-pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .game-title {
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fbbf24;
+            text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .game-subtitle {
+            font-size: 1em;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+        }
+
+        /* Progress */
+        .progress-info {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.6);
+            margin-bottom: 25px;
+        }
+
+        /* Question Section */
+        .question-section {
+            margin-bottom: 30px;
+        }
+
+        .question-text {
+            font-size: 1.4em;
+            font-weight: 600;
+            margin-bottom: 25px;
+            line-height: 1.4;
+            color: #e0e7ff;
+        }
+
+        /* Answer Options */
+        .answers-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .answer-option {
+            background: linear-gradient(135deg, rgba(30, 58, 138, 0.4), rgba(15, 23, 42, 0.6));
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            border-radius: 12px;
+            padding: 15px 20px;
+            color: white;
+            font-size: 1.1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .answer-option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+
+        .answer-option:hover {
+            transform: translateY(-2px);
+            border-color: rgba(251, 191, 36, 0.6);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.2);
+        }
+
+        .answer-option:hover::before {
+            left: 100%;
+        }
+
+        .answer-option.correct {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.4), rgba(6, 95, 70, 0.6));
+            border-color: rgba(16, 185, 129, 0.6);
+            animation: success-pulse 0.6s ease-out;
+        }
+
+        .answer-option.incorrect {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.4), rgba(185, 28, 28, 0.6));
+            border-color: rgba(239, 68, 68, 0.6);
+            animation: error-shake 0.6s ease-out;
+        }
+
+        @keyframes success-pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes error-shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        .answer-option.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        /* Feedback Section */
+        .feedback-section {
+            min-height: 60px;
+            margin-bottom: 20px;
+        }
+
+        .feedback-message {
+            font-size: 1.1em;
+            font-weight: 600;
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+        }
+
+        .feedback-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feedback-message.success {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(6, 95, 70, 0.3));
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #a7f3d0;
+        }
+
+        .feedback-message.error {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(185, 28, 28, 0.3));
+            border: 1px solid rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        /* Action Buttons */
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a1a2e;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 6px 20px rgba(251, 191, 36, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(251, 191, 36, 0.4);
+        }
+
+        .action-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .action-btn.secondary {
+            background: rgba(100, 116, 139, 0.6);
+            color: white;
+            border: 2px solid rgba(100, 116, 139, 0.8);
+        }
+
+        .action-btn.secondary:hover {
+            background: rgba(100, 116, 139, 0.8);
+        }
+
+        /* Success Screen */
+        .success-screen {
+            display: none;
+            text-align: center;
+        }
+
+        .success-screen.show {
+            display: block;
+            animation: success-appear 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        @keyframes success-appear {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) rotateY(10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotateY(0deg);
+            }
+        }
+
+        .success-icon {
+            font-size: 5em;
+            margin-bottom: 20px;
+            animation: celebration 1.5s ease-in-out infinite;
+        }
+
+        @keyframes celebration {
+            0%, 100% {
+                transform: rotate(-5deg) scale(1);
+            }
+            50% {
+                transform: rotate(5deg) scale(1.1);
+            }
+        }
+
+        .success-title {
+            font-size: 2.5em;
+            font-weight: 700;
+            color: #10b981;
+            margin-bottom: 15px;
+            text-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+        }
+
+        .final-score {
+            font-size: 1.3em;
+            color: #fbbf24;
+            margin-bottom: 20px;
+        }
+
+        .answer-explanation {
+            font-size: 1.1em;
+            color: #a7f3d0;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(6, 95, 70, 0.2);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .game-container {
+                width: 95%;
+                padding: 25px 20px;
+            }
+
+            .game-title {
+                font-size: 1.8em;
+            }
+
+            .game-icon {
+                font-size: 3em;
+            }
+
+            .question-text {
+                font-size: 1.2em;
+            }
+
+            .answer-option {
+                padding: 12px 15px;
+                font-size: 1em;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .action-btn {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Animated Stars Background -->
+    <div class="stars-container" id="stars-container"></div>
+
+    <!-- Game Container -->
+    <div class="game-container">
+        <!-- Game Screen -->
+        <div class="game-screen" id="game-screen">
+            <div class="game-header">
+                <div class="game-icon" id="game-icon">🚀</div>
+                <h1 class="game-title" id="game-title">太空知識挑戰</h1>
+                <p class="game-subtitle" id="game-subtitle">測試你的太空科學知識</p>
+                <div class="progress-info" id="progress-info">問題 1 / 5</div>
+            </div>
+
+            <div class="question-section">
+                <h2 class="question-text" id="question-text">加載中...</h2>
+            </div>
+
+            <div class="answers-container" id="answers-container">
+                <!-- Answer options will be populated by JavaScript -->
+            </div>
+
+            <div class="feedback-section" id="feedback-section">
+                <!-- Feedback messages will appear here -->
+            </div>
+
+            <div class="action-buttons" id="action-buttons">
+                <button class="action-btn secondary" onclick="restartGame()">重新開始</button>
+            </div>
+        </div>
+
+        <!-- Success Screen -->
+        <div class="success-screen" id="success-screen">
+            <div class="success-icon">🎉</div>
+            <h2 class="success-title">恭喜完成！</h2>
+            <div class="final-score" id="final-score">總分: 0</div>
+            <div class="answer-explanation" id="answer-explanation">
+                所有答案解釋將顯示在這裡...
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="restartGame()">再玩一次</button>
+                <button class="action-btn secondary" onclick="window.close()">關閉</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Game state
+        let gameConfig = {};
+        let gameData = {};
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let gameQuestions = [];
+        let currentQuestion = null;
+        let answersExplanations = [];
+
+        // Initialize game
+        async function initGame() {
+            try {
+                // Show loading state
+                document.getElementById('question-text').textContent = '正在加載配置...';
+                
+                // Load game config FIRST (contains the single question)
+                console.log('Loading config.json...');
+                const configResponse = await fetch('config.json');
+                if (!configResponse.ok) {
+                    throw new Error(`Config fetch failed: ${configResponse.status}`);
+                }
+                gameConfig = await configResponse.json();
+                console.log('Config loaded:', gameConfig);
+                
+                // Update title and subtitle from config (with defaults)
+                document.getElementById('game-title').textContent = gameConfig.title || '太空知識挑戰';
+                document.getElementById('game-subtitle').textContent = gameConfig.subtitle || '測試你的太空科學知識';
+                
+                // Set initial background from config
+                await setQuestionBackground();
+                
+                // Convert single question config to game format
+                gameData = {
+                    description: gameConfig.description || "測試你的知識",
+                    questions: [{
+                        question: gameConfig.question,
+                        answers: [
+                            gameConfig.options.a,
+                            gameConfig.options.b,
+                            gameConfig.options.c,
+                            gameConfig.options.d
+                        ],
+                        correct: gameConfig.correct_answer === 'a' ? 0 : 
+                                gameConfig.correct_answer === 'b' ? 1 :
+                                gameConfig.correct_answer === 'c' ? 2 : 3,
+                        score: 100,
+                        hints: [
+                            gameConfig.correct_answer === 'a' ? gameConfig.answer_explanation : "錯誤答案，請再試試。",
+                            gameConfig.correct_answer === 'b' ? gameConfig.answer_explanation : "錯誤答案，請再試試。",
+                            gameConfig.correct_answer === 'c' ? gameConfig.answer_explanation : "錯誤答案，請再試試。",
+                            gameConfig.correct_answer === 'd' ? gameConfig.answer_explanation : "錯誤答案，請再試試。"
+                        ]
+                    }]
+                };
+                console.log('Game data created from config:', gameData);
+                
+                // Initialize questions
+                gameQuestions = [...gameData.questions];
+                
+                // Create stars
+                createStars();
+                
+                // Start first question
+                loadQuestion();
+                
+            } catch (error) {
+                console.error('Failed to initialize game:', error);
+                showError('加載遊戲失敗，請重試。');
+            }
+        }
+
+        // Set question background (image or gradient)
+        async function setQuestionBackground() {
+            if (gameConfig.question_bg_image_url) {
+                try {
+                    // Test if image exists and can be loaded
+                    const img = new Image();
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        img.src = gameConfig.question_bg_image_url;
+                    });
+                    
+                    // Image loaded successfully, use it as background
+                    document.body.style.background = `url('${gameConfig.question_bg_image_url}') center center / cover no-repeat`;
+                    console.log('Question background image set to:', gameConfig.question_bg_image_url);
+                    return;
+                } catch (error) {
+                    console.warn('Failed to load question background image:', gameConfig.question_bg_image_url, error);
+                }
+            }
+            
+            // Fallback to gradient background
+            if (gameConfig.background_start) {
+                document.body.style.background = gameConfig.background_start;
+                console.log('Question background set to gradient:', gameConfig.background_start);
+            } else {
+                // Default background
+                document.body.style.background = 'radial-gradient(ellipse at center, #1e3a8a 0%, #0a0e27 100%)';
+                console.log('Question background set to default gradient');
+            }
+        }
+
+        // Set answer background (image or gradient)
+        async function setAnswerBackground() {
+            if (gameConfig.answer_bg_image_url) {
+                try {
+                    // Test if image exists and can be loaded
+                    const img = new Image();
+                    await new Promise((resolve, reject) => {
+                        img.onload = resolve;
+                        img.onerror = reject;
+                        img.src = gameConfig.answer_bg_image_url;
+                    });
+                    
+                    // Image loaded successfully, use it as background
+                    document.body.style.background = `url('${gameConfig.answer_bg_image_url}') center center / cover no-repeat`;
+                    console.log('Answer background image set to:', gameConfig.answer_bg_image_url);
+                    return;
+                } catch (error) {
+                    console.warn('Failed to load answer background image:', gameConfig.answer_bg_image_url, error);
+                }
+            }
+            
+            // Fallback to gradient background
+            if (gameConfig.background_success) {
+                document.body.style.background = gameConfig.background_success;
+                console.log('Answer background set to gradient:', gameConfig.background_success);
+            } else {
+                // Default success background
+                document.body.style.background = 'radial-gradient(ellipse at center, #065f46 0%, #0a0e27 100%)';
+                console.log('Answer background set to default success gradient');
+            }
+        }
+
+        // Create animated stars
+        function createStars() {
+            const container = document.getElementById('stars-container');
+            const starCount = 50;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.width = star.style.height = (Math.random() * 3 + 1) + 'px';
+                star.style.animationDuration = (Math.random() * 3 + 2) + 's';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                container.appendChild(star);
+            }
+        }
+
+        // Load current question
+        function loadQuestion() {
+            if (currentQuestionIndex >= gameQuestions.length) {
+                showSuccess();
+                return;
+            }
+
+            currentQuestion = gameQuestions[currentQuestionIndex];
+            
+            // Update progress
+            document.getElementById('progress-info').textContent = 
+                `問題 ${currentQuestionIndex + 1} / ${gameQuestions.length}`;
+            
+            // Update question text
+            document.getElementById('question-text').textContent = currentQuestion.question;
+            
+            // Clear feedback
+            clearFeedback();
+            
+            // Generate answer options
+            generateAnswerOptions();
+        }
+
+        // Generate answer options
+        function generateAnswerOptions() {
+            const container = document.getElementById('answers-container');
+            container.innerHTML = '';
+            
+            currentQuestion.answers.forEach((answer, index) => {
+                const option = document.createElement('div');
+                option.className = 'answer-option';
+                option.textContent = answer; // Use answer as-is from config (already includes A. B. C. D.)
+                option.onclick = () => selectAnswer(index);
+                container.appendChild(option);
+            });
+        }
+
+        // Handle answer selection
+        function selectAnswer(selectedIndex) {
+            const options = document.querySelectorAll('.answer-option');
+            const correctIndex = currentQuestion.correct;
+            
+            // Disable all options
+            options.forEach(option => option.classList.add('disabled'));
+            
+            if (selectedIndex === correctIndex) {
+                // Correct answer
+                options[selectedIndex].classList.add('correct');
+                score += currentQuestion.score || 10;
+                
+                // Store explanation for final screen
+                answersExplanations.push({
+                    question: currentQuestion.question,
+                    answer: currentQuestion.answers[correctIndex],
+                    explanation: currentQuestion.hints[selectedIndex]
+                });
+                
+                // Jump directly to success screen without delay
+                setTimeout(() => {
+                    showSuccess();
+                }, 500); // Short delay to show correct answer highlight
+                
+            } else {
+                // Incorrect answer
+                options[selectedIndex].classList.add('incorrect');
+                options[correctIndex].classList.add('correct');
+                
+                showFeedback(currentQuestion.hints[selectedIndex], 'error');
+                
+                // Allow retry after delay
+                setTimeout(() => {
+                    options.forEach(option => {
+                        option.classList.remove('disabled', 'incorrect', 'correct');
+                    });
+                    clearFeedback();
+                }, 2000);
+            }
+        }
+
+        // Show feedback message
+        function showFeedback(message, type) {
+            const feedbackSection = document.getElementById('feedback-section');
+            feedbackSection.innerHTML = `
+                <div class="feedback-message ${type}">
+                    ${message}
+                </div>
+            `;
+            
+            // Animate in
+            setTimeout(() => {
+                const feedbackEl = feedbackSection.querySelector('.feedback-message');
+                if (feedbackEl) {
+                    feedbackEl.classList.add('show');
+                }
+            }, 100);
+        }
+
+        // Clear feedback
+        function clearFeedback() {
+            document.getElementById('feedback-section').innerHTML = '';
+        }
+
+        // Show success screen
+        async function showSuccess() {
+            // Change background to answer background (image or gradient)
+            await setAnswerBackground();
+            
+            // Update final score
+            document.getElementById('final-score').textContent = `總分: ${score}`;
+            
+            // Generate explanations
+            const explanationText = answersExplanations.map(item => 
+                `<strong>問題:</strong> <br>${item.question}<br>
+                 <strong>答案:</strong><br>
+                 ${item.explanation}`
+            ).join('<br><br>');
+            
+            document.getElementById('answer-explanation').innerHTML = explanationText || gameConfig.answer_explanation;
+            
+            // Hide game screen and show success screen
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('success-screen').classList.add('show');
+        }
+
+        // Restart game
+        async function restartGame() {
+            currentQuestionIndex = 0;
+            score = 0;
+            answersExplanations = [];
+            
+            // Reset background to question background (image or gradient)
+            await setQuestionBackground();
+            
+            // Show game screen and hide success screen
+            document.getElementById('game-screen').style.display = 'block';
+            document.getElementById('success-screen').classList.remove('show');
+            
+            // Reload first question
+            loadQuestion();
+        }
+
+        // Show error message
+        function showError(message) {
+            document.getElementById('question-text').textContent = message;
+            document.getElementById('answers-container').innerHTML = '';
+        }
+
+        // Initialize game when page loads
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

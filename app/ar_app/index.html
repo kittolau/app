@@ -1001,6 +1001,156 @@
                 font-size: 1em;
                 min-width: 180px;
             }
+            
+            /* MC Game card responsive */
+            #mc-game-card {
+                max-width: 95%;
+                width: auto;
+                padding: 25px 20px;
+            }
+            
+            .mission-brief-icon {
+                font-size: 3em;
+                margin-bottom: 12px;
+            }
+            
+            .mission-brief-title {
+                font-size: 1.5em;
+            }
+            
+            .mission-accept-btn {
+                padding: 12px 30px;
+                font-size: 1em;
+            }
+        }
+
+        /* MC Game Mission Briefing Card */
+        #mc-game-card {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.95);
+            background: linear-gradient(135deg, 
+                #1a1a2e 0%, 
+                #16213e 25%, 
+                #0f3460 50%, 
+                #16213e 75%, 
+                #1a1a2e 100%);
+            backdrop-filter: blur(20px);
+            border: 2px solid rgba(251, 191, 36, 0.3);
+            border-radius: 20px;
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                0 0 40px rgba(251, 191, 36, 0.15);
+            color: white;
+            z-index: 1001;
+            max-width: 420px;
+            width: 90%;
+            padding: 30px;
+            text-align: center;
+            display: none;
+            animation: mission-brief-enter 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .mission-brief-header {
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .mission-brief-icon {
+            font-size: 4em;
+            margin-bottom: 15px;
+            animation: mission-pulse 2s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.8));
+        }
+
+        .mission-brief-title {
+            font-size: 1.8em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #fbbf24;
+            text-shadow: 0 2px 10px rgba(251, 191, 36, 0.3);
+            letter-spacing: 1px;
+        }
+
+        .mission-brief-subtitle {
+            font-size: 0.9em;
+            color: rgba(255, 255, 255, 0.7);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.2);
+            padding-bottom: 15px;
+        }
+
+        .mission-accept-btn {
+            background: linear-gradient(135deg, #fbbf24, #f59e0b);
+            color: #1a1a2e;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 12px;
+            font-size: 1.1em;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 
+                0 8px 25px rgba(251, 191, 36, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mission-accept-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 
+                0 12px 35px rgba(251, 191, 36, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .mission-accept-btn:active {
+            transform: translateY(0);
+        }
+
+        .mission-accept-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .mission-accept-btn:hover::before {
+            left: 100%;
+        }
+
+        @keyframes mission-brief-enter {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.8) rotateY(10deg);
+                filter: blur(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(0.95) rotateY(0deg);
+                filter: blur(0);
+            }
+        }
+
+        @keyframes mission-pulse {
+            0%, 100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.8));
+            }
+            50% {
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 25px rgba(251, 191, 36, 1));
+            }
         }
     </style>
 </head>
@@ -1124,6 +1274,21 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+    
+    <!-- MC Game Mission Briefing Card -->
+    <div id="mc-game-card">
+        <button class="close-btn" onclick="hideMCGameInfo()">×</button>
+        <div class="mission-brief-header">
+            <div class="mission-brief-icon">🎯</div>
+            <h2 class="mission-brief-title" id="mc-game-title">任務挑戰</h2>
+            <div class="mission-brief-subtitle">Challenge Mission</div>
+        </div>
+        <div class="mission-brief-content">
+            <button class="mission-accept-btn" id="mc-game-accept-btn">
+                接受挑戰
+            </button>
         </div>
     </div>
     
@@ -1582,7 +1747,9 @@
                         // Personal info for astronauts/personnel
                         personal_info: data.personal_info || null,
                         // Introduction info for missions/projects
-                        introduction_info: data.introduction_info || null
+                        introduction_info: data.introduction_info || null,
+                        // MC Game info for interactive games
+                        mc_game: data.mc_game || null
                     };
                     
                     console.log('✓ Cached config for:', modelName, '(Type:', data.marker_type || 'pattern', ', Model:', data.model_file || 'model.gltf', ')');
@@ -1649,7 +1816,12 @@
                         };
                         modelDescriptions[modelName] = {
                             title: modelName,
-                            hk_narrative: 'AR Model'
+                            hk_narrative: 'AR Model',
+                            youtube_video_src: null,
+                            local_video_src: null,
+                            personal_info: null,
+                            introduction_info: null,
+                            mc_game: null
                         };
                     }
                 });
@@ -2008,6 +2180,10 @@
             if (desc && desc.personal_info) {
                 showPersonalInfo(modelName, desc.personal_info);
             } 
+            // Check if this model has mc_game - show MC game briefing card
+            else if (desc && desc.mc_game) {
+                showMCGameInfo(modelName, desc.mc_game);
+            }
             // Check if this model has introduction_info - show introduction info card
             else if (desc && desc.introduction_info) {
                 showIntroductionInfo(modelName, desc.introduction_info);
@@ -2072,12 +2248,13 @@
                     speechSynthesis.cancel();
                 }
                 
-                // Hide overlay, speak button, video buttons, personal info card, introduction info card and show instructions
+                // Hide overlay, speak button, video buttons, personal info card, mc game card, introduction info card and show instructions
                 var hoverMsg = document.getElementById('ar-hover-message');
                 var speakBtn = document.getElementById('speak-button');
                 var youtubeBtn = document.getElementById('youtube-button');
                 var videoBtn = document.getElementById('video-button');
                 var personalInfoCard = document.getElementById('personal-info-card');
+                var mcGameCard = document.getElementById('mc-game-card');
                 var introductionInfoCard = document.getElementById('introduction-info-card');
                 var instructions = document.getElementById('instructions');
                 
@@ -2099,6 +2276,9 @@
                 }
                 if (personalInfoCard) {
                     personalInfoCard.style.display = 'none';
+                }
+                if (mcGameCard) {
+                    mcGameCard.style.display = 'none';
                 }
                 if (introductionInfoCard) {
                     introductionInfoCard.style.display = 'none';
@@ -2122,7 +2302,12 @@
             };
             modelDescriptions[modelName] = {
                 title: 'AR Model',
-                hk_narrative: 'Point camera at marker'
+                hk_narrative: 'Point camera at marker',
+                youtube_video_src: null,
+                local_video_src: null,
+                personal_info: null,
+                introduction_info: null,
+                mc_game: null
             };
             
             initializeARScene();
@@ -2535,6 +2720,65 @@
                     speechSynthesis.speak(utterance);
                     console.log('🔊 Speaking introduction:', title || 'Introduction');
                 }
+            }
+        }
+        
+        // Show MC Game mission briefing card
+        function showMCGameInfo(modelName, mcGameInfo) {
+            console.log('🎯 Showing MC Game info for:', modelName, mcGameInfo);
+            
+            var card = document.getElementById('mc-game-card');
+            var titleEl = document.getElementById('mc-game-title');
+            var acceptBtn = document.getElementById('mc-game-accept-btn');
+            
+            if (!card) return;
+            
+            // Hide other elements
+            var hoverMsg = document.getElementById('ar-hover-message');
+            var speakBtn = document.getElementById('speak-button');
+            var youtubeBtn = document.getElementById('youtube-button');
+            var videoBtn = document.getElementById('video-button');
+            var instructions = document.getElementById('instructions');
+            var personalInfoCard = document.getElementById('personal-info-card');
+            var introductionInfoCard = document.getElementById('introduction-info-card');
+            
+            if (hoverMsg) hoverMsg.style.display = 'none';
+            if (speakBtn) speakBtn.style.display = 'none';
+            if (youtubeBtn) youtubeBtn.style.display = 'none';
+            if (videoBtn) videoBtn.style.display = 'none';
+            if (instructions) instructions.style.display = 'none';
+            if (personalInfoCard) personalInfoCard.style.display = 'none';
+            if (introductionInfoCard) introductionInfoCard.style.display = 'none';
+            
+            // Update title
+            if (titleEl && mcGameInfo.title) {
+                titleEl.textContent = mcGameInfo.title;
+            }
+            
+            // Update button text
+            if (acceptBtn && mcGameInfo.mc_game_button_text) {
+                acceptBtn.textContent = mcGameInfo.mc_game_button_text;
+            }
+            
+            // Set up button click handler
+            if (acceptBtn && mcGameInfo.mc_game_url) {
+                acceptBtn.onclick = function() {
+                    console.log('🚀 Opening MC Game:', mcGameInfo.mc_game_url);
+                    window.open(mcGameInfo.mc_game_url, '_blank');
+                };
+            }
+            
+            // Show the card
+            card.style.display = 'block';
+            
+            console.log('✅ MC Game briefing displayed for:', mcGameInfo.title || modelName);
+        }
+
+        // Hide MC Game mission briefing card
+        function hideMCGameInfo() {
+            var card = document.getElementById('mc-game-card');
+            if (card) {
+                card.style.display = 'none';
             }
         }
         

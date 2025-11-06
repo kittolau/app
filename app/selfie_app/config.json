@@ -1,0 +1,33 @@
+{
+  "person_filter": {
+    "image_path": "p1-min.png",
+    "size": {
+      "scale": 2,
+      "description": "Scale relative to face width (0.1-2.0)"
+    },
+    "position": {
+      "horizontal_offset": 0.4,
+      "vertical_offset": 0,
+      "description": "Offset relative to face size. horizontal: negative=left, positive=right. vertical: negative=up, positive=down"
+    },
+    "effects": {
+      "glow": {
+        "enabled": false,
+        "color": "rgba(100, 200, 255, 0.5)",
+        "blur": 10
+      },
+      "shadow": {
+        "enabled": false,
+        "color": "rgba(0, 0, 0, 0.3)",
+        "offset_x": 2,
+        "offset_y": 2,
+        "blur": 5
+      }
+    },
+    "display": {
+      "maintain_aspect_ratio": true,
+      "flip_with_camera": true,
+      "fade_in_duration": 300
+    }
+  }
+}

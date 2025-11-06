@@ -1,0 +1,9 @@
+{
+  "marker_type": "barcode",
+  "barcode_value": "6",
+  "mc_game": {
+    "title": "問題遊戲挑戰",
+    "mc_game_button_text": "接受挑戰",
+    "mc_game_url": "../mc_game/index.html"
+  }
+}

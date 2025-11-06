@@ -1,0 +1,13 @@
+{
+    "question_bg_image_url": "q_bg.png",
+    "answer_bg_image_url": "a_bg.png",
+    "question":"世界上有多少個國家可以發射載人火箭的發射場?",
+    "options": {
+        "a": "A. 1 個",
+        "b": "B. 2 個",
+        "c": "C. 3 個",
+        "d": "D. 4 個"
+    },
+    "correct_answer": "c",
+    "answer_explanation":"3 個(俄羅斯，美國，中國）"
+}
