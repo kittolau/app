@@ -2,11 +2,12 @@
   "person_filter": {
     "image_path": "p1-min.png",
     "size": {
-      "scale": 2,
+      "scale": 2.3,
       "description": "Scale relative to face width (0.1-2.0)"
     },
     "position": {
-      "horizontal_offset": 0.4,
+      "horizontal_offset": -2.7,
+      "horizontal_flip_offset": 0.3,
       "vertical_offset": 0,
       "description": "Offset relative to face size. horizontal: negative=left, positive=right. vertical: negative=up, positive=down"
     },

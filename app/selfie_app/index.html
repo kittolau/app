@@ -214,6 +214,31 @@
             background: rgba(0, 0, 0, 0.8);
         }
         
+        /* Flip person button */
+        .flip-person-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background: rgba(76, 175, 80, 0.8);
+            color: white;
+            cursor: pointer;
+            font-size: 24px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .flip-person-btn.show {
+            display: flex;
+        }
+        
+        .flip-person-btn:hover {
+            background: rgba(76, 175, 80, 1);
+            transform: scale(1.1);
+        }
+        
         /* Photo preview modal */
         .photo-preview {
             position: fixed;
@@ -334,10 +359,41 @@
             
             .header {
                 top: 10px;
+                font-size: 16px;
+                padding: 10px 20px;
             }
             
             .filter-selector {
                 bottom: 100px;
+                gap: 12px;
+            }
+            
+            .filter-btn {
+                width: 50px;
+                height: 50px;
+            }
+            
+            .controls {
+                bottom: 20px;
+                gap: 15px;
+            }
+            
+            .capture-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 24px;
+            }
+            
+            .switch-camera-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
+            }
+            
+            .flip-person-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 20px;
             }
         }
     </style>
@@ -384,6 +440,7 @@
         <div class="controls">
             <button class="switch-camera-btn" id="switchCamera" title="Switch Camera">🔄</button>
             <button class="capture-btn" id="captureBtn" title="Take Photo">📷</button>
+            <button class="flip-person-btn" id="flipPersonBtn" title="Flip Person Position">↔️</button>
         </div>
     </div>
     
@@ -405,6 +462,7 @@
         let facingMode = 'user'; // 'user' = front camera, 'environment' = back camera
         let detectedFaces = [];
         let config = null; // Store app configuration
+        let isPersonFlipped = false; // Track person image flip state
         
         // Load the person image
         const personImage = new Image();
@@ -599,8 +657,17 @@
                 ? (personImage.height / personImage.width) * imageWidth
                 : imageWidth; // Square if aspect ratio not maintained
             
-            // Calculate position based on config
-            const horizontalOffset = size * (personConfig.position?.horizontal_offset || 0.6);
+            // Calculate position based on config and flip state
+            let horizontalOffset;
+            
+            if (isPersonFlipped && personConfig.position?.horizontal_flip_offset !== undefined) {
+                // Use horizontal_flip_offset when flipped
+                horizontalOffset = size * personConfig.position.horizontal_flip_offset;
+            } else {
+                // Use normal horizontal_offset
+                horizontalOffset = size * (personConfig.position?.horizontal_offset || 0.6);
+            }
+            
             const verticalOffset = size * (personConfig.position?.vertical_offset || 0);
             
             const imageX = x + horizontalOffset;
@@ -642,6 +709,15 @@
                     document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentFilter = btn.dataset.filter;
+                    
+                    // Show/hide flip button based on filter
+                    const flipBtn = document.getElementById('flipPersonBtn');
+                    if (currentFilter === 'person') {
+                        flipBtn.classList.add('show');
+                    } else {
+                        flipBtn.classList.remove('show');
+                    }
+                    
                     console.log('🎨 Filter changed:', currentFilter);
                 });
             });
@@ -651,6 +727,9 @@
             
             // Switch camera button
             document.getElementById('switchCamera').addEventListener('click', switchCamera);
+            
+            // Flip person button
+            document.getElementById('flipPersonBtn').addEventListener('click', flipPersonPosition);
             
             // Photo actions
             document.getElementById('downloadBtn').addEventListener('click', downloadPhoto);
@@ -693,6 +772,12 @@
             await startCamera();
             
             console.log('🔄 Camera switched to:', facingMode);
+        }
+        
+        // Flip person position
+        function flipPersonPosition() {
+            isPersonFlipped = !isPersonFlipped;
+            console.log('↔️ Person position flipped:', isPersonFlipped ? 'left' : 'right');
         }
         
         // Show error message
