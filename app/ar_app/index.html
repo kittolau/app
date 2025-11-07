@@ -3,7 +3,7 @@
 <head>
     <title>AR Viewer - Dynamic Model Loading</title>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
     <script>
@@ -22,15 +22,22 @@
 
         body { margin: 0; overflow: hidden; }
         
-        /* Ensure A-Frame scene is visible */
+        /* Ensure A-Frame scene is visible and square */
         a-scene {
             display: block !important;
             position: fixed !important;
-            top: 0 !important;
-            left: 0 !important;
-            width: 100% !important;
-            height: 100% !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: min(100vw, 100vh) !important;
+            height: min(100vw, 100vh) !important;
+            max-width: 100vh !important;
+            max-height: 100vw !important;
+            aspect-ratio: 1 / 1 !important;
             z-index: 1 !important;
+            border: 2px solid rgba(124, 58, 237, 0.3);
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(124, 58, 237, 0.2);
         }
         
         /* Loading Splash Screen */
@@ -832,7 +839,7 @@
         
         #speak-button {
             position: fixed;
-            bottom: 30px;
+            bottom: calc(50% - min(50vw, 50vh) - 70px);
             left: 50%;
             transform: translateX(calc(-100% - 10px));
             background-color: rgba(33, 150, 243, 0.9);
@@ -867,7 +874,7 @@
         
         #youtube-button {
             position: fixed;
-            bottom: 30px;
+            bottom: calc(50% - min(50vw, 50vh) - 70px);
             left: 50%;
             transform: translateX(10px);
             background-color: rgba(255, 0, 0, 0.9);
@@ -899,7 +906,7 @@
         
         #video-button {
             position: fixed;
-            bottom: 30px;
+            bottom: calc(50% - min(50vw, 50vh) - 70px);
             left: 50%;
             transform: translateX(10px);
             background-color: rgba(76, 175, 80, 0.9);
@@ -929,10 +936,10 @@
             margin-right: 8px;
         }
         
-        /* Instructions */
+        /* Instructions positioned above the square AR view */
         #instructions {
             position: fixed;
-            top: 20px;
+            top: calc(50% - min(50vw, 50vh) - 60px);
             left: 50%;
             transform: translateX(-50%);
             background: rgba(30, 144, 255, 0.9);
@@ -1354,7 +1361,7 @@
     </button>
     
     <!-- A-Frame AR Scene -->
-    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;' vr-mode-ui="enabled: false" renderer="colorManagement: true; physicallyCorrectLights: true;" id="ar-scene">
+    <a-scene embedded arjs='sourceType: webcam; sourceWidth: 640; sourceHeight: 640; debugUIEnabled: false; detectionMode: mono_and_matrix; matrixCodeType: 3x3;' vr-mode-ui="enabled: false" renderer="colorManagement: true; physicallyCorrectLights: true;" id="ar-scene">
         <!-- Global lighting for PBR materials -->
         <a-entity light="type: ambient; color: #BBB; intensity: 1"></a-entity>
         <a-entity light="type: hemisphere; color: #FFF; groundColor: #888; intensity: 1"></a-entity>
@@ -2853,6 +2860,112 @@
             }
         }
         
+        // Handle window resize to update camera projection matrix
+        function handleWindowResize() {
+            console.log('📐 Window resized, updating camera projection matrix...');
+            
+            // Get the AR scene and camera entity
+            var scene = document.querySelector('a-scene');
+            var cameraEl = document.querySelector('[camera]');
+            
+            if (!scene || !cameraEl) {
+                console.warn('⚠️ Scene or camera not found for resize handling');
+                return;
+            }
+            
+            // Wait for scene to be ready
+            if (scene.hasLoaded) {
+                updateCameraProjection(cameraEl);
+            } else {
+                scene.addEventListener('loaded', function() {
+                    updateCameraProjection(cameraEl);
+                });
+            }
+        }
+        
+        function updateCameraProjection(cameraEl) {
+            try {
+                // Get the Three.js camera object
+                var camera = cameraEl.getObject3D('camera');
+                
+                if (camera && camera.isPerspectiveCamera) {
+                    // Force square aspect ratio (1:1)
+                    var squareAspect = 1.0;
+                    
+                    console.log('📹 Updating camera projection for SQUARE display - Aspect: 1:1', 
+                               'Screen Resolution:', window.innerWidth + 'x' + window.innerHeight);
+                    
+                    // Update camera properties for square AR view
+                    camera.aspect = squareAspect;
+                    camera.fov = 90; // Maintain 90-degree FOV
+                    
+                    // Update the projection matrix
+                    camera.updateProjectionMatrix();
+                    
+                    console.log('✅ Square AR camera projection updated - FOV: 90°, Aspect: 1:1');
+                    
+                    // Update any shadow cameras if they exist
+                    updateShadowCameras();
+                    
+                } else {
+                    console.warn('⚠️ Camera object not found or not a perspective camera');
+                }
+            } catch (error) {
+                console.error('❌ Error updating camera projection:', error);
+            }
+        }
+        
+        // Update shadow cameras for lights that cast shadows
+        function updateShadowCameras() {
+            try {
+                var scene = document.querySelector('a-scene');
+                if (!scene || !scene.object3D) return;
+                
+                var shadowCamerasUpdated = 0;
+                
+                scene.object3D.traverse(function(object) {
+                    // Update directional light shadow cameras
+                    if (object.isDirectionalLight && object.shadow && object.shadow.camera) {
+                        if (object.shadow.camera.isPerspectiveCamera || object.shadow.camera.isOrthographicCamera) {
+                            object.shadow.camera.updateProjectionMatrix();
+                            shadowCamerasUpdated++;
+                        }
+                    }
+                    
+                    // Update spot light shadow cameras
+                    if (object.isSpotLight && object.shadow && object.shadow.camera) {
+                        if (object.shadow.camera.isPerspectiveCamera) {
+                            // For spot lights, keep original aspect ratio for shadows
+                            object.shadow.camera.updateProjectionMatrix();
+                            shadowCamerasUpdated++;
+                        }
+                    }
+                    
+                    // Update point light shadow cameras (if any)
+                    if (object.isPointLight && object.shadow && object.shadow.camera) {
+                        if (object.shadow.camera.isPerspectiveCamera) {
+                            object.shadow.camera.updateProjectionMatrix();
+                            shadowCamerasUpdated++;
+                        }
+                    }
+                });
+                
+                if (shadowCamerasUpdated > 0) {
+                    console.log('✅ Updated', shadowCamerasUpdated, 'shadow camera projection matrices');
+                }
+                
+            } catch (error) {
+                console.warn('⚠️ Error updating shadow cameras:', error);
+            }
+        }
+        
+        // Add resize event listener with debouncing to avoid excessive calls
+        var resizeTimeout;
+        window.addEventListener('resize', function() {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(handleWindowResize, 150); // Debounce for 150ms
+        });
+        
         // Initialize on page load
         window.addEventListener('load', function() {
             console.log('=== AR Viewer with Multi-Marker Support and Speech ===');
@@ -2862,6 +2975,11 @@
             if (speakBtn) {
                 speakBtn.addEventListener('click', toggleSpeech);
             }
+            
+            // Initial camera setup after everything is loaded
+            setTimeout(function() {
+                handleWindowResize();
+            }, 2000); // Wait 2 seconds for AR.js to fully initialize
             
             // Load voices (needed for some browsers)
             if (speechSynthesis.onvoiceschanged !== undefined) {
