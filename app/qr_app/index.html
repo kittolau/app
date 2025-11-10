@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner with 3D Model Viewer</title>
+    <!-- ZXing Library for QR Code scanning -->
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+    <!-- Google's model-viewer for 3D display -->
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            position: relative;
+            height: 100vh;
+        }
+
+        /* Scanner Container */
+        #qr-reader {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Scanner Video Element Styling */
+        #qr-reader video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            transform: scaleX(-1); /* Mirror the video for better UX */
+        }
+
+        /* Scanner Overlay */
+        .scanner-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        /* Scanning Frame */
+        .scan-frame {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            height: 280px;
+            border: 3px solid #00ff00;
+            border-radius: 20px;
+            background: transparent;
+            box-shadow: 
+                0 0 0 9999px rgba(0, 0, 0, 0.5),
+                inset 0 0 20px rgba(0, 255, 0, 0.3),
+                0 0 40px rgba(0, 255, 0, 0.6);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                border-color: #00ff00;
+                box-shadow: 
+                    0 0 0 9999px rgba(0, 0, 0, 0.5),
+                    inset 0 0 20px rgba(0, 255, 0, 0.3),
+                    0 0 40px rgba(0, 255, 0, 0.6);
+            }
+            50% {
+                border-color: #00ff88;
+                box-shadow: 
+                    0 0 0 9999px rgba(0, 0, 0, 0.5),
+                    inset 0 0 30px rgba(0, 255, 136, 0.4),
+                    0 0 60px rgba(0, 255, 136, 0.8);
+            }
+        }
+
+        /* Corner Markers */
+        .scan-frame::before,
+        .scan-frame::after {
+            content: '';
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #00ff00;
+        }
+
+        .scan-frame::before {
+            top: -3px;
+            left: -3px;
+            border-right: none;
+            border-bottom: none;
+            border-top-left-radius: 20px;
+        }
+
+        .scan-frame::after {
+            bottom: -3px;
+            right: -3px;
+            border-left: none;
+            border-top: none;
+            border-bottom-right-radius: 20px;
+        }
+
+        /* Additional corner markers */
+        .corner-top-right,
+        .corner-bottom-left {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #00ff00;
+        }
+
+        .corner-top-right {
+            top: -3px;
+            right: -3px;
+            border-left: none;
+            border-bottom: none;
+            border-top-right-radius: 20px;
+        }
+
+        .corner-bottom-left {
+            bottom: -3px;
+            left: -3px;
+            border-right: none;
+            border-top: none;
+            border-bottom-left-radius: 20px;
+        }
+
+        /* Instructions */
+        .instructions {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 20px 30px;
+            border-radius: 15px;
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            z-index: 20;
+        }
+
+        .instructions h2 {
+            color: #00ff00;
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .instructions p {
+            color: #ccc;
+            font-size: 1em;
+            line-height: 1.4;
+        }
+
+        /* Result Display */
+        .result-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .result-content {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border: 2px solid #00ff00;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 90%;
+            max-height: 80%;
+            overflow-y: auto;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        }
+
+        .result-title {
+            color: #00ff00;
+            font-size: 2em;
+            margin-bottom: 20px;
+            font-weight: 700;
+        }
+
+        .result-value {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 1.1em;
+            color: #fff;
+            border-left: 4px solid #00ff00;
+        }
+
+        .result-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00ff00, #00cc00);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #00cc00, #009900);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 255, 0, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+
+        .btn-copy {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: #fff;
+        }
+
+        .btn-copy:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+        }
+
+        /* Status Indicator */
+        .status-indicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-size: 1em;
+            font-weight: 600;
+            border: 2px solid #00ff00;
+            z-index: 20;
+        }
+
+        .status-scanning {
+            color: #00ff00;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Error States */
+        .error-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(220, 38, 38, 0.9);
+            color: #fff;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 90%;
+            z-index: 100;
+            display: none;
+        }
+
+        .error-message h3 {
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .error-message p {
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Loading State */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 50;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left: 4px solid #00ff00;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .scan-frame {
+                width: 250px;
+                height: 250px;
+            }
+
+            .instructions {
+                top: 60px;
+                padding: 15px 20px;
+            }
+
+            .instructions h2 {
+                font-size: 1.3em;
+            }
+
+            .instructions p {
+                font-size: 0.9em;
+            }
+
+            .result-content {
+                padding: 30px 20px;
+            }
+
+            .result-title {
+                font-size: 1.6em;
+            }
+
+            .result-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn {
+                width: 200px;
+            }
+        }
+
+        /* Video element styling for ZXing */
+        #qr-video {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover !important;
+            transform: scaleX(-1); /* Mirror the video for better UX */
+        }
+
+        /* 3D Model Viewer Styles */
+        .model-viewer-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #181818;
+            color: #fff;
+            display: none;
+            flex-direction: column;
+            z-index: 2000;
+            animation: slideInFromRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .model-viewer-container.show {
+            display: flex;
+        }
+
+        @keyframes slideInFromRight {
+            0% {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .model-header {
+            position: relative;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-bottom: 2px solid #00ff00;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .back-button {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 12px 16px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+
+        .back-button:hover {
+            background: rgba(0, 255, 0, 0.3);
+            transform: translateY(-50%) scale(1.1);
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.5);
+        }
+
+        .model-title {
+            text-align: center;
+            margin: 0;
+            font-size: 1.4em;
+            color: #90caf9;
+            font-weight: 600;
+        }
+
+        .model-info {
+            text-align: center;
+            margin-top: 8px;
+            color: #bbb;
+            font-size: 0.95em;
+        }
+
+        .model-viewer-wrapper {
+            flex: 1;
+            position: relative;
+            background: #222;
+        }
+
+        model-viewer {
+            width: 100%;
+            height: 100%;
+            background-color: #222;
+            --poster-color: #222;
+            --progress-bar-color: #00ff00;
+            --progress-mask: rgba(0, 0, 0, 0.8);
+        }
+
+        .model-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px 25px;
+            border-radius: 25px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .control-btn {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            color: #00ff00;
+            padding: 10px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .control-btn:hover {
+            background: rgba(0, 255, 0, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 255, 0, 0.4);
+        }
+
+        .control-btn.active {
+            background: #00ff00;
+            color: #000;
+        }
+
+        /* Loading state for model viewer */
+        .model-loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            color: #00ff00;
+            z-index: 10;
+        }
+
+        .model-loading .spinner {
+            border-color: rgba(0, 255, 0, 0.1);
+            border-left-color: #00ff00;
+        }
+
+        /* QR Result Badge */
+        .qr-result-badge {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #00ff00;
+            border-radius: 15px;
+            padding: 10px 15px;
+            font-size: 0.85em;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            max-width: 200px;
+            word-break: break-all;
+        }
+
+        /* Responsive Design for Model Viewer */
+        @media (max-width: 480px) {
+            .model-header {
+                padding: 15px;
+            }
+            
+            .back-button {
+                left: 15px;
+                padding: 10px 12px;
+                font-size: 1.1em;
+            }
+            
+            .model-title {
+                font-size: 1.2em;
+                margin-right: 60px;
+            }
+            
+            .model-controls {
+                bottom: 15px;
+                padding: 12px 20px;
+                gap: 10px;
+            }
+            
+            .control-btn {
+                padding: 8px 12px;
+                font-size: 0.8em;
+            }
+            
+            .qr-result-badge {
+                top: 15px;
+                right: 15px;
+                font-size: 0.75em;
+                max-width: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading State -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Starting Camera...</p>
+    </div>
+
+    <!-- Error Message -->
+    <div class="error-message" id="error-message">
+        <h3>⚠️ Camera Access Required</h3>
+        <p>Please allow camera access to scan QR codes. Check your browser settings and refresh the page.</p>
+        <button class="btn btn-primary" onclick="startScanner()">Try Again</button>
+    </div>
+
+    <!-- QR Scanner -->
+    <div id="qr-reader">
+        <video id="qr-video" autoplay playsinline></video>
+    </div>
+
+    <!-- Scanner Overlay -->
+    <div class="scanner-overlay">
+        <!-- Instructions -->
+        <div class="instructions">
+            <h2>📱 QR Code Scanner</h2>
+            <p>Position the QR code within the frame to scan</p>
+        </div>
+
+        <!-- Scanning Frame -->
+        <div class="scan-frame">
+            <div class="corner-top-right"></div>
+            <div class="corner-bottom-left"></div>
+        </div>
+
+        <!-- Status Indicator -->
+        <div class="status-indicator status-scanning">
+            🔍 Scanning...
+        </div>
+    </div>
+
+    <!-- Result Modal -->
+    <div class="result-modal" id="result-modal">
+        <div class="result-content">
+            <div class="result-title">✅ QR Code Detected!</div>
+            <div class="result-value" id="result-value">
+                <!-- QR code value will be displayed here -->
+            </div>
+            <div class="result-buttons">
+                <button class="btn btn-copy" onclick="copyToClipboard()">📋 Copy</button>
+                <button class="btn btn-primary" onclick="openLink()">🔗 Open Link</button>
+                <button class="btn btn-primary" onclick="show3DModel()" id="show-3d-btn" style="display: none;">🎯 View 3D Model</button>
+                <button class="btn btn-secondary" onclick="continueScanning()">🔄 Scan Again</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3D Model Viewer -->
+    <div class="model-viewer-container" id="model-viewer-container">
+        <div class="model-header">
+            <button class="back-button" onclick="closeModelViewer()" title="Back to Scanner">
+                ←
+            </button>
+            <h1 class="model-title" id="model-title">3D Model Preview</h1>
+            <div class="model-info" id="model-info">Loading 3D model...</div>
+        </div>
+        
+        <div class="model-viewer-wrapper">
+            <!-- QR Result Badge -->
+            <div class="qr-result-badge" id="qr-badge">
+                QR: <span id="qr-badge-text">Loading...</span>
+            </div>
+            
+            <!-- Loading State -->
+            <div class="model-loading" id="model-loading">
+                <div class="spinner"></div>
+                <p>Loading 3D Model...</p>
+            </div>
+            
+            <!-- 3D Model Viewer -->
+            <model-viewer 
+                id="model-viewer"
+                alt="3D Model from QR Code"
+                auto-rotate 
+                camera-controls 
+                tone-mapping="neutral"
+                shadow-intensity="1"
+                loading="eager"
+                reveal="auto">
+            </model-viewer>
+            
+            <!-- Model Controls -->
+            <div class="model-controls">
+                <button class="control-btn" onclick="toggleAutoRotate()" id="rotate-btn">
+                    🔄 Auto Rotate
+                </button>
+                <button class="control-btn" onclick="resetCamera()">
+                    📷 Reset View
+                </button>
+                <button class="control-btn" onclick="toggleFullscreen()">
+                    ⛶ Fullscreen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let codeReader;
+        let currentResult = '';
+        let isScanning = false;
+        let videoStream = null;
+
+        // Initialize the scanner when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 QR Scanner: Starting initialization...');
+            startScanner();
+        });
+
+        async function startScanner() {
+            const loading = document.getElementById('loading');
+            const errorMessage = document.getElementById('error-message');
+            const video = document.getElementById('qr-video');
+            
+            try {
+                loading.style.display = 'block';
+                errorMessage.style.display = 'none';
+
+                console.log('📹 QR Scanner: Requesting camera access...');
+
+                // Initialize ZXing code reader
+                codeReader = new ZXing.BrowserQRCodeReader();
+                
+                // Get available video input devices (cameras)
+                const videoInputDevices = await codeReader.listVideoInputDevices();
+                
+                if (videoInputDevices && videoInputDevices.length > 0) {
+                    console.log('📷 QR Scanner: Found cameras:', videoInputDevices.length);
+                    
+                    // Prefer back camera on mobile devices
+                    let selectedDeviceId = videoInputDevices[0].deviceId;
+                    
+                    // Look for back/rear/environment camera
+                    const backCamera = videoInputDevices.find(device => 
+                        device.label.toLowerCase().includes('back') || 
+                        device.label.toLowerCase().includes('rear') ||
+                        device.label.toLowerCase().includes('environment')
+                    );
+                    
+                    if (backCamera) {
+                        selectedDeviceId = backCamera.deviceId;
+                        console.log('📱 QR Scanner: Using back camera:', backCamera.label);
+                    }
+
+                    // Start decoding from video device
+                    const constraints = {
+                        video: {
+                            deviceId: selectedDeviceId ? { exact: selectedDeviceId } : undefined,
+                            facingMode: { ideal: 'environment' },
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    };
+
+                    // Get video stream
+                    videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = videoStream;
+                    
+                    // Wait for video to be ready
+                    await new Promise((resolve) => {
+                        video.onloadedmetadata = () => {
+                            video.play();
+                            resolve();
+                        };
+                    });
+
+                    console.log('✅ QR Scanner: Camera started successfully');
+                    loading.style.display = 'none';
+                    isScanning = true;
+
+                    // Start continuous scanning
+                    startContinuousScanning();
+
+                } else {
+                    throw new Error('No cameras found');
+                }
+                
+            } catch (error) {
+                console.error('❌ QR Scanner Error:', error);
+                loading.style.display = 'none';
+                errorMessage.style.display = 'block';
+                
+                // Show specific error messages
+                const errorText = errorMessage.querySelector('p');
+                if (error.message.includes('Permission') || error.name === 'NotAllowedError') {
+                    errorText.textContent = 'Camera permission denied. Please allow camera access and try again.';
+                } else if (error.message.includes('NotFound') || error.name === 'NotFoundError') {
+                    errorText.textContent = 'No camera found on this device.';
+                } else {
+                    errorText.textContent = `Camera error: ${error.message}`;
+                }
+            }
+        }
+
+        function startContinuousScanning() {
+            if (!isScanning || !codeReader) return;
+
+            const video = document.getElementById('qr-video');
+            
+            // Use ZXing's continuous decode method
+            codeReader.decodeFromVideoDevice(undefined, video, (result, error) => {
+                if (result) {
+                    onScanSuccess(result.getText(), result);
+                } else if (error && !(error instanceof ZXing.NotFoundException)) {
+                    // Only log non-routine errors (NotFoundException is normal when no QR code is visible)
+                    console.warn('⚠️ QR Scanner:', error);
+                }
+            });
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            if (!isScanning) return;
+            
+            console.log('🎯 QR Code detected:', decodedText);
+            
+            // Stop scanning temporarily to show result
+            currentResult = decodedText;
+            pauseScanning();
+            showResult(decodedText);
+            
+            // Add visual feedback
+            const scanFrame = document.querySelector('.scan-frame');
+            scanFrame.style.borderColor = '#00ff00';
+            scanFrame.style.animation = 'none';
+            
+            // Play success sound (if supported)
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1O/JdCMFl8/z1XUmBiWH2O+scC8GQ');
+                audio.play().catch(() => {});
+            } catch(e) {}
+        }
+
+        function pauseScanning() {
+            isScanning = false;
+            if (codeReader) {
+                codeReader.reset();
+            }
+        }
+
+        function resumeScanning() {
+            isScanning = true;
+            if (codeReader) {
+                startContinuousScanning();
+            }
+        }
+
+        function showResult(qrValue) {
+            const modal = document.getElementById('result-modal');
+            const resultValueEl = document.getElementById('result-value');
+            const show3DBtn = document.getElementById('show-3d-btn');
+            
+            resultValueEl.textContent = qrValue;
+            modal.style.display = 'flex';
+            
+            // Check if QR code might contain a 3D model URL
+            const is3DModel = is3DModelURL(qrValue);
+            
+            // Update button visibility based on QR content
+            const openLinkBtn = modal.querySelector('button[onclick="openLink()"]');
+            
+            if (is3DModel) {
+                // Show 3D model button instead of regular link button
+                show3DBtn.style.display = 'inline-block';
+                openLinkBtn.style.display = 'none';
+            } else if (isValidURL(qrValue)) {
+                show3DBtn.style.display = 'none';
+                openLinkBtn.style.display = 'inline-block';
+                openLinkBtn.textContent = '🔗 Open Link';
+            } else if (qrValue.toLowerCase().startsWith('mailto:')) {
+                show3DBtn.style.display = 'none';
+                openLinkBtn.style.display = 'inline-block';
+                openLinkBtn.textContent = '✉️ Send Email';
+            } else if (qrValue.toLowerCase().startsWith('tel:')) {
+                show3DBtn.style.display = 'none';
+                openLinkBtn.style.display = 'inline-block';
+                openLinkBtn.textContent = '📞 Call Number';
+            } else if (qrValue.toLowerCase().startsWith('sms:')) {
+                show3DBtn.style.display = 'none';
+                openLinkBtn.style.display = 'inline-block';
+                openLinkBtn.textContent = '💬 Send SMS';
+            } else {
+                show3DBtn.style.display = 'none';
+                openLinkBtn.style.display = 'none';
+            }
+        }
+
+        function is3DModelURL(url) {
+            // Check if URL points to a 3D model file
+            const modelExtensions = ['.gltf', '.glb', '.obj', '.fbx', '.dae', '.ply'];
+            const lowerUrl = url.toLowerCase();
+            
+            // Check for direct model file URLs
+            for (const ext of modelExtensions) {
+                if (lowerUrl.includes(ext)) {
+                    return true;
+                }
+            }
+            
+            // Check for known 3D model hosting patterns
+            if (lowerUrl.includes('kittolau.github.io') && lowerUrl.includes('.gltf')) {
+                return true;
+            }
+            
+            // Check for specific patterns that indicate 3D models
+            if (lowerUrl.includes('result.gltf') || lowerUrl.includes('model.glb')) {
+                return true;
+            }
+            
+            return false;
+        }
+
+        function isValidURL(string) {
+            try {
+                new URL(string);
+                return true;
+            } catch (_) {
+                return false;
+            }
+        }
+
+        async function copyToClipboard() {
+            try {
+                await navigator.clipboard.writeText(currentResult);
+                
+                // Visual feedback
+                const copyBtn = document.querySelector('.btn-copy');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Copied!';
+                copyBtn.style.background = 'linear-gradient(135deg, #10b981, #059669)';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = 'linear-gradient(135deg, #3b82f6, #1d4ed8)';
+                }, 2000);
+                
+                console.log('📋 QR value copied to clipboard');
+            } catch (error) {
+                console.error('❌ Failed to copy:', error);
+                
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = currentResult;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                alert('Copied to clipboard!');
+            }
+        }
+
+        function openLink() {
+            if (currentResult) {
+                console.log('🔗 Opening:', currentResult);
+                window.open(currentResult, '_blank');
+            }
+        }
+
+        function continueScanning() {
+            const modal = document.getElementById('result-modal');
+            modal.style.display = 'none';
+            
+            // Reset scan frame animation
+            const scanFrame = document.querySelector('.scan-frame');
+            scanFrame.style.borderColor = '#00ff00';
+            scanFrame.style.animation = 'pulse 2s ease-in-out infinite';
+            
+            // Resume scanning
+            resumeScanning();
+            
+            console.log('🔄 Continuing scan...');
+        }
+
+        // 3D Model Viewer Functions
+        function show3DModel() {
+            if (!currentResult) {
+                console.error('No QR result to display as 3D model');
+                return;
+            }
+
+            console.log('🎯 Opening 3D model viewer for:', currentResult);
+            
+            const modal = document.getElementById('result-modal');
+            const modelContainer = document.getElementById('model-viewer-container');
+            const modelViewer = document.getElementById('model-viewer');
+            const modelTitle = document.getElementById('model-title');
+            const modelInfo = document.getElementById('model-info');
+            const qrBadge = document.getElementById('qr-badge-text');
+            const modelLoading = document.getElementById('model-loading');
+            
+            // Hide the result modal
+            modal.style.display = 'none';
+            
+            // Show the model viewer container
+            modelContainer.classList.add('show');
+            
+            // Update the QR badge
+            qrBadge.textContent = currentResult.length > 30 ? 
+                currentResult.substring(0, 30) + '...' : currentResult;
+            
+            // Show loading state
+            modelLoading.style.display = 'block';
+            
+            // Set up the model viewer
+            let modelUrl = currentResult;
+            let modelName = 'QR Code 3D Model';
+            
+            // Extract model name from URL if possible
+            try {
+                const url = new URL(currentResult);
+                const pathParts = url.pathname.split('/');
+                const fileName = pathParts[pathParts.length - 1];
+                if (fileName && fileName !== 'result.gltf') {
+                    modelName = fileName.replace(/\.[^/.]+$/, ""); // Remove extension
+                }
+            } catch (e) {
+                // Not a valid URL, use as is
+            }
+            
+            // Update title and info
+            modelTitle.textContent = modelName;
+            modelInfo.textContent = `Model: ${modelUrl.split('/').pop()}`;
+            
+            // Set the model source
+            modelViewer.src = modelUrl;
+            
+            // Handle model loading events
+            modelViewer.addEventListener('load', function() {
+                console.log('✅ 3D Model loaded successfully');
+                modelLoading.style.display = 'none';
+            });
+            
+            modelViewer.addEventListener('error', function(event) {
+                console.error('❌ 3D Model failed to load:', event);
+                modelLoading.innerHTML = `
+                    <div style="color: #ff6b6b;">
+                        <h3>❌ Model Load Failed</h3>
+                        <p>Could not load 3D model from:</p>
+                        <code style="font-size: 0.8em; word-break: break-all;">${modelUrl}</code>
+                        <p style="margin-top: 15px;">Please check if the URL is valid and the model file exists.</p>
+                    </div>
+                `;
+            });
+        }
+
+        function closeModelViewer() {
+            console.log('⬅️ Closing 3D model viewer');
+            
+            const modelContainer = document.getElementById('model-viewer-container');
+            const modelViewer = document.getElementById('model-viewer');
+            
+            // Hide the model viewer
+            modelContainer.classList.remove('show');
+            
+            // Clear the model source to free memory
+            setTimeout(() => {
+                if (modelViewer) {
+                    modelViewer.src = '';
+                }
+            }, 400); // Wait for animation to complete
+            
+            // Continue scanning
+            continueScanning();
+        }
+
+        function toggleAutoRotate() {
+            const modelViewer = document.getElementById('model-viewer');
+            const rotateBtn = document.getElementById('rotate-btn');
+            
+            if (modelViewer.hasAttribute('auto-rotate')) {
+                modelViewer.removeAttribute('auto-rotate');
+                rotateBtn.classList.remove('active');
+                rotateBtn.textContent = '▶️ Auto Rotate';
+                console.log('🔄 Auto rotate disabled');
+            } else {
+                modelViewer.setAttribute('auto-rotate', '');
+                rotateBtn.classList.add('active');
+                rotateBtn.textContent = '⏸️ Stop Rotate';
+                console.log('🔄 Auto rotate enabled');
+            }
+        }
+
+        function resetCamera() {
+            const modelViewer = document.getElementById('model-viewer');
+            if (modelViewer && modelViewer.resetTurntableRotation) {
+                modelViewer.resetTurntableRotation();
+                console.log('📷 Camera view reset');
+            }
+        }
+
+        function toggleFullscreen() {
+            const modelContainer = document.getElementById('model-viewer-container');
+            
+            if (!document.fullscreenElement) {
+                modelContainer.requestFullscreen().then(() => {
+                    console.log('⛶ Entered fullscreen mode');
+                }).catch(err => {
+                    console.error('❌ Failed to enter fullscreen:', err);
+                });
+            } else {
+                document.exitFullscreen().then(() => {
+                    console.log('⛶ Exited fullscreen mode');
+                }).catch(err => {
+                    console.error('❌ Failed to exit fullscreen:', err);
+                });
+            }
+        }
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                console.log('📱 Page hidden - pausing scanner');
+            } else {
+                console.log('📱 Page visible - resuming scanner');
+            }
+        });
+
+        // Handle browser back button
+        window.addEventListener('popstate', function() {
+            if (codeReader) {
+                codeReader.reset();
+            }
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (codeReader) {
+                codeReader.reset();
+            }
+            if (videoStream) {
+                videoStream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Handle modal close with ESC key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modal = document.getElementById('result-modal');
+                const modelContainer = document.getElementById('model-viewer-container');
+                
+                // Check if model viewer is open
+                if (modelContainer.classList.contains('show')) {
+                    closeModelViewer();
+                } else if (modal.style.display === 'flex') {
+                    continueScanning();
+                }
+            }
+        });
+
+        // Prevent zoom on double tap (iOS Safari)
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function (event) {
+            const now = (new Date()).getTime();
+            if (now - lastTouchEnd <= 300) {
+                event.preventDefault();
+            }
+            lastTouchEnd = now;
+        }, false);
+    </script>
+</body>
+</html>

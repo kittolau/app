@@ -1,0 +1,33 @@
+{
+  "size": 0.8,
+  "position": {
+    "x": 0,
+    "y": 1.2,
+    "z": 0
+  },
+  "rotation": {
+    "x": 90,
+    "y": 0,
+    "z": 0
+  },
+  "model_file": "sputnik1.glb",
+  "marker_type": "qrcode",
+  "qr_code": "SPUTNIK1_MODEL",
+  "desc_info": {
+    "title": "Sputnik 1 (史普尼克 1 號) - QR Version",
+    "youtube_video_src": "https://www.youtube.com/watch?v=DTDb3eKpPiw",
+    "hk_narrative": "這是通過 QR 碼觸發的 Sputnik 1 模型。Sputnik 1 (史普尼克 1 號) 是蘇聯於 1957 年 10 月 4 日發射的人類首顆人造衛星。掃描 QR 碼即可看到此 3D 模型！"
+  },
+  "personal_info": {
+    "name_zh": "史普尼克 1 號",
+    "nationality": "蘇聯",
+    "birth_date": "1957年10月4日",
+    "main_mission": "人類首顆人造衛星，開啟太空時代",
+    "moto": [
+      "「嗶嗶」聲響遍全球，宣告太空時代來臨",
+      "小小衛星，巨大飛躍",
+      "證明人類可以征服太空的第一步"
+    ],
+    "youtube_video_src": "https://www.youtube.com/watch?v=DTDb3eKpPiw"
+  }
+}

@@ -6,11 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
     <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    <!-- ZXing library for QR code detection -->
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
     <script>
         // Configure A-Frame to use Draco decoder for compressed models
         if (typeof THREE !== 'undefined' && THREE.DRACOLoader) {
             THREE.DRACOLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
             console.log('✓ Draco decoder configured');
+        }
+        
+        // Initialize ZXing QR Code Reader
+        var qrCodeReader = null;
+        var isQRScanningActive = false;
+        var qrScanCanvas = null;
+        var qrScanContext = null;
+        
+        // Initialize QR scanner when ZXing loads
+        if (typeof ZXing !== 'undefined') {
+            console.log('✓ ZXing library loaded');
+            qrCodeReader = new ZXing.BrowserQRCodeReader();
         }
     </script>
     <style>
@@ -954,6 +968,98 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
         
+        /* QR Scanner Controls */
+        #qr-scanner-controls {
+            position: fixed;
+            top: calc(50% + min(50vw, 50vh) + 20px);
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            z-index: 1500;
+            flex-wrap: wrap;
+            max-width: 90%;
+        }
+        
+        .qr-scan-btn {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 12px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(22, 163, 74, 0.4);
+        }
+        
+        .qr-scan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.6);
+        }
+        
+        .qr-scan-btn.active {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4);
+        }
+        
+        .qr-scan-btn.active:hover {
+            box-shadow: 0 6px 20px rgba(220, 38, 38, 0.6);
+        }
+        
+        .qr-scan-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+        
+        /* QR Result Display */
+        #qr-result-display {
+            position: fixed;
+            top: calc(50% - min(50vw, 50vh) - 110px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(16, 185, 129, 0.95);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            font-family: Arial, sans-serif;
+            font-size: 1em;
+            font-weight: 600;
+            z-index: 1600;
+            text-align: center;
+            max-width: 90%;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+            display: none;
+            word-break: break-all;
+        }
+        
+        #qr-result-display.show {
+            display: block;
+            animation: qrResultSlide 0.3s ease-out;
+        }
+        
+        @keyframes qrResultSlide {
+            0% {
+                opacity: 0;
+                transform: translateX(-50%) translateY(-20px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        
+        /* QR Scanner Canvas (hidden) */
+        #qr-scan-canvas {
+            display: none;
+        }
+        
         /* Responsive adjustments */
         @media (max-width: 540px) {
             #ar-hover-message {
@@ -1065,6 +1171,26 @@
             .mission-accept-btn {
                 padding: 12px 30px;
                 font-size: 1em;
+            }
+            
+            /* QR Scanner responsive */
+            #qr-scanner-controls {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .qr-scan-btn {
+                padding: 10px 20px;
+                font-size: 0.9em;
+                min-width: 180px;
+                justify-content: center;
+            }
+            
+            #qr-result-display {
+                max-width: 95%;
+                padding: 12px 20px;
+                font-size: 0.9em;
+                top: calc(50% - min(50vw, 50vh) - 100px);
             }
         }
 
@@ -1252,8 +1378,35 @@
 
     <!-- Instructions for users -->
     <div id="instructions">
-        請將相機對準AR標記以查看
+        請將相機對準AR標記或QR碼以查看
     </div>
+    
+    <!-- QR Result Display -->
+    <div id="qr-result-display">
+        <div id="qr-result-text">QR碼已偵測到</div>
+    </div>
+    
+    <!-- QR Scanner Controls -->
+    <div id="qr-scanner-controls">
+        <button class="qr-scan-btn" id="qr-scan-toggle-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 3h6v6H3V3zm2 2v2h2V5H5zM3 15h6v6H3v-6zm2 2v2h2v-2H5zM15 3h6v6h-6V3zm2 2v2h2V5h-2zM13 13h1.5v1.5H13V13zm0 3h1.5v1.5H13V16zm-3 0h1.5v1.5H10V16zm0 3h1.5v1.5H10V19zm3 0h1.5v1.5H13V19zm3-6h1.5v1.5H16V13zm0 3h1.5v1.5H16V16zm0 3h1.5v1.5H16V19zm3-9h1.5v1.5H19V10zm0 3h1.5v1.5H19V13zm0 3h1.5v1.5H19V16zm0 3h1.5v1.5H19V19z"/>
+            </svg>
+            <span id="qr-scan-btn-text">啟動QR掃描</span>
+        </button>
+        
+        <button class="qr-scan-btn" id="qr-scan-file-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.89 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+            </svg>
+            上傳圖片掃描
+        </button>
+        
+        <input type="file" id="qr-file-input" accept="image/*" style="display: none;">
+    </div>
+    
+    <!-- Hidden canvas for QR scanning -->
+    <canvas id="qr-scan-canvas"></canvas>
     
     <!-- AR message when marker is detected -->
     <div id="ar-hover-message">
@@ -1379,6 +1532,13 @@
         var currentModel = null;
         var speechSynthesis = window.speechSynthesis;
         var currentUtterance = null;
+        
+        // QR Scanner variables
+        var qrCodeReaderInstance = null;
+        var qrScanningActive = false;
+        var qrScanRequestId = null;
+        var lastQRResult = null;
+        var qrResultTimeout = null;
         
         // Loading progress tracking
         var loadingProgress = {
@@ -1771,8 +1931,10 @@
                         rotX: data.rotation ? data.rotation.x || 0 : 0,
                         rotY: data.rotation ? data.rotation.y || 0 : 0,
                         rotZ: data.rotation ? data.rotation.z || 0 : 0,
-                        markerType: data.marker_type || 'pattern', // 'pattern' or 'barcode'
+                        markerType: data.marker_type || 'pattern', // 'pattern', 'barcode', or 'qrcode'
                         modelFile: data.model_file || 'model.gltf', // Support both .gltf and .glb files
+                        // QR Code support
+                        qr_code: data.qr_code || null, // QR code text/data to match
                         // Orbit animation settings
                         spinAroundEarth: data.spin_around_earth_orbit || false,
                         earth: data.earth ? {
@@ -2966,15 +3128,354 @@
             resizeTimeout = setTimeout(handleWindowResize, 150); // Debounce for 150ms
         });
         
+        // QR Scanner Functions
+        function initializeQRScanner() {
+            console.log('🔍 Initializing ZXing QR Scanner...');
+            
+            // Wait for ZXing to be available
+            if (typeof ZXing === 'undefined') {
+                console.error('❌ ZXing library not loaded');
+                return false;
+            }
+            
+            try {
+                qrCodeReaderInstance = new ZXing.BrowserQRCodeReader();
+                console.log('✅ ZXing QR Scanner initialized');
+                
+                // Set up QR scanner controls
+                setupQRScannerControls();
+                return true;
+            } catch (error) {
+                console.error('❌ Failed to initialize QR Scanner:', error);
+                return false;
+            }
+        }
+        
+        function setupQRScannerControls() {
+            var toggleBtn = document.getElementById('qr-scan-toggle-btn');
+            var fileBtn = document.getElementById('qr-scan-file-btn');
+            var fileInput = document.getElementById('qr-file-input');
+            
+            // Toggle QR scanning
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleQRScanning);
+            }
+            
+            // File upload QR scanning
+            if (fileBtn) {
+                fileBtn.addEventListener('click', function() {
+                    if (fileInput) {
+                        fileInput.click();
+                    }
+                });
+            }
+            
+            if (fileInput) {
+                fileInput.addEventListener('change', handleQRFileUpload);
+            }
+        }
+        
+        function toggleQRScanning() {
+            if (qrScanningActive) {
+                stopQRScanning();
+            } else {
+                startQRScanning();
+            }
+        }
+        
+        function startQRScanning() {
+            if (!qrCodeReaderInstance) {
+                console.error('❌ QR Scanner not initialized');
+                return;
+            }
+            
+            if (qrScanningActive) {
+                console.log('ℹ️ QR scanning already active');
+                return;
+            }
+            
+            console.log('🔍 Starting QR scanning...');
+            
+            // Get video element from AR.js
+            var video = document.querySelector('video');
+            if (!video) {
+                console.error('❌ No video element found for QR scanning');
+                return;
+            }
+            
+            qrScanningActive = true;
+            updateQRScanButton(true);
+            
+            // Start continuous QR scanning
+            scanQRFromVideo(video);
+        }
+        
+        function stopQRScanning() {
+            console.log('⏹️ Stopping QR scanning...');
+            
+            qrScanningActive = false;
+            updateQRScanButton(false);
+            
+            if (qrScanRequestId) {
+                cancelAnimationFrame(qrScanRequestId);
+                qrScanRequestId = null;
+            }
+            
+            hideQRResult();
+        }
+        
+        function scanQRFromVideo(video) {
+            if (!qrScanningActive || !video) {
+                return;
+            }
+            
+            try {
+                // Get canvas for QR scanning
+                var canvas = document.getElementById('qr-scan-canvas');
+                if (!canvas) {
+                    console.error('❌ QR scan canvas not found');
+                    return;
+                }
+                
+                var context = canvas.getContext('2d');
+                
+                // Set canvas size to match video
+                canvas.width = video.videoWidth || 640;
+                canvas.height = video.videoHeight || 480;
+                
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    // Draw current video frame to canvas
+                    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                    
+                    // Get image data for QR scanning
+                    var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                    
+                    // Try to decode QR from the image data
+                    qrCodeReaderInstance.decodeFromImageData(imageData)
+                        .then(function(result) {
+                            if (result && result.text) {
+                                onQRCodeDetected(result.text);
+                            }
+                        })
+                        .catch(function(error) {
+                            // No QR code found - this is normal, continue scanning
+                            if (error.name !== 'NotFoundException') {
+                                console.warn('⚠️ QR scanning error:', error);
+                            }
+                        });
+                }
+                
+                // Continue scanning if still active
+                if (qrScanningActive) {
+                    qrScanRequestId = requestAnimationFrame(function() {
+                        scanQRFromVideo(video);
+                    });
+                }
+                
+            } catch (error) {
+                console.error('❌ Error during QR scanning:', error);
+                stopQRScanning();
+            }
+        }
+        
+        function handleQRFileUpload(event) {
+            var file = event.target.files[0];
+            if (!file) {
+                return;
+            }
+            
+            console.log('📁 Processing uploaded file for QR scanning...');
+            
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var img = new Image();
+                img.onload = function() {
+                    scanQRFromImage(img);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+            
+            // Reset file input
+            event.target.value = '';
+        }
+        
+        function scanQRFromImage(image) {
+            if (!qrCodeReaderInstance) {
+                console.error('❌ QR Scanner not initialized');
+                return;
+            }
+            
+            try {
+                // Create canvas for image processing
+                var canvas = document.createElement('canvas');
+                var context = canvas.getContext('2d');
+                
+                canvas.width = image.width;
+                canvas.height = image.height;
+                context.drawImage(image, 0, 0);
+                
+                var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                
+                qrCodeReaderInstance.decodeFromImageData(imageData)
+                    .then(function(result) {
+                        if (result && result.text) {
+                            console.log('✅ QR code found in uploaded image:', result.text);
+                            onQRCodeDetected(result.text);
+                        } else {
+                            showQRResult('未找到QR碼', false);
+                        }
+                    })
+                    .catch(function(error) {
+                        console.warn('⚠️ No QR code found in uploaded image:', error);
+                        showQRResult('圖片中未找到QR碼', false);
+                    });
+                    
+            } catch (error) {
+                console.error('❌ Error scanning QR from image:', error);
+                showQRResult('掃描圖片時發生錯誤', false);
+            }
+        }
+        
+        function onQRCodeDetected(qrText) {
+            // Avoid duplicate processing
+            if (qrText === lastQRResult) {
+                return;
+            }
+            
+            lastQRResult = qrText;
+            console.log('🎯 QR Code detected:', qrText);
+            
+            // Show QR result
+            showQRResult('QR碼: ' + qrText, true);
+            
+            // Check if this QR code corresponds to a model
+            var modelName = findModelByQRCode(qrText);
+            if (modelName) {
+                console.log('✅ QR code matches model:', modelName);
+                // Trigger model display as if marker was found
+                onMarkerFound(modelName);
+            } else {
+                // Handle generic QR codes
+                handleGenericQRCode(qrText);
+            }
+            
+            // Clear last result after delay
+            setTimeout(function() {
+                lastQRResult = null;
+            }, 2000);
+        }
+        
+        function findModelByQRCode(qrText) {
+            // Check if any model configuration matches this QR code
+            for (var modelName in modelConfigs) {
+                var config = modelConfigs[modelName];
+                // Check if model has QR code configuration
+                if (config.qr_code && config.qr_code === qrText) {
+                    return modelName;
+                }
+                // Also check if QR text matches model name
+                if (modelName.toLowerCase() === qrText.toLowerCase()) {
+                    return modelName;
+                }
+            }
+            return null;
+        }
+        
+        function handleGenericQRCode(qrText) {
+            // Handle generic QR codes (URLs, text, etc.)
+            if (qrText.startsWith('http://') || qrText.startsWith('https://')) {
+                // It's a URL
+                console.log('🔗 QR code contains URL:', qrText);
+                
+                // Ask user if they want to open the URL
+                if (confirm('QR碼包含網址，是否要開啟？\n' + qrText)) {
+                    window.open(qrText, '_blank');
+                }
+            } else {
+                // Generic text
+                console.log('📝 QR code contains text:', qrText);
+                
+                // Show text in a more permanent way
+                alert('QR碼內容：\n' + qrText);
+            }
+        }
+        
+        function showQRResult(text, success) {
+            var resultDisplay = document.getElementById('qr-result-display');
+            var resultText = document.getElementById('qr-result-text');
+            
+            if (!resultDisplay || !resultText) {
+                return;
+            }
+            
+            // Update content
+            resultText.textContent = text;
+            
+            // Update style based on success
+            if (success) {
+                resultDisplay.style.background = 'rgba(16, 185, 129, 0.95)';
+            } else {
+                resultDisplay.style.background = 'rgba(239, 68, 68, 0.95)';
+            }
+            
+            // Show result
+            resultDisplay.classList.add('show');
+            
+            // Clear previous timeout
+            if (qrResultTimeout) {
+                clearTimeout(qrResultTimeout);
+            }
+            
+            // Hide after delay
+            qrResultTimeout = setTimeout(function() {
+                hideQRResult();
+            }, 3000);
+        }
+        
+        function hideQRResult() {
+            var resultDisplay = document.getElementById('qr-result-display');
+            if (resultDisplay) {
+                resultDisplay.classList.remove('show');
+            }
+            
+            if (qrResultTimeout) {
+                clearTimeout(qrResultTimeout);
+                qrResultTimeout = null;
+            }
+        }
+        
+        function updateQRScanButton(isScanning) {
+            var toggleBtn = document.getElementById('qr-scan-toggle-btn');
+            var btnText = document.getElementById('qr-scan-btn-text');
+            
+            if (!toggleBtn || !btnText) {
+                return;
+            }
+            
+            if (isScanning) {
+                toggleBtn.classList.add('active');
+                btnText.textContent = '停止QR掃描';
+            } else {
+                toggleBtn.classList.remove('active');
+                btnText.textContent = '啟動QR掃描';
+            }
+        }
+        
         // Initialize on page load
         window.addEventListener('load', function() {
-            console.log('=== AR Viewer with Multi-Marker Support and Speech ===');
+            console.log('=== AR Viewer with Multi-Marker Support, Speech & QR Scanner ===');
             
             // Set up speak button
             var speakBtn = document.getElementById('speak-button');
             if (speakBtn) {
                 speakBtn.addEventListener('click', toggleSpeech);
             }
+            
+            // Initialize QR Scanner
+            setTimeout(function() {
+                initializeQRScanner();
+            }, 1000);
             
             // Initial camera setup after everything is loaded
             setTimeout(function() {

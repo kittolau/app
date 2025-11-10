@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZXing QR Scanner Test</title>
+    <script src="https://unpkg.com/@zxing/library@latest/umd/index.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        
+        video {
+            width: 100%;
+            max-width: 400px;
+            height: 300px;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            display: block;
+            margin: 20px auto;
+        }
+        
+        .result {
+            background: #e9f7ef;
+            border: 1px solid #27ae60;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            word-break: break-all;
+        }
+        
+        .error {
+            background: #fdf2f2;
+            border: 1px solid #e74c3c;
+            border-radius: 5px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #c0392b;
+        }
+        
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        button:hover {
+            background: #0056b3;
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        
+        .status {
+            text-align: center;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        
+        .success { color: #27ae60; }
+        .scanning { color: #f39c12; }
+        .error-status { color: #e74c3c; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 ZXing QR Scanner Test</h1>
+        
+        <div class="status" id="status">Click "Start Scanner" to begin</div>
+        
+        <video id="video" autoplay playsinline style="display: none;"></video>
+        
+        <div style="text-align: center;">
+            <button id="startBtn" onclick="startScanning()">Start Scanner</button>
+            <button id="stopBtn" onclick="stopScanning()" disabled>Stop Scanner</button>
+        </div>
+        
+        <div id="result" style="display: none;">
+            <div class="result">
+                <h3>QR Code Detected:</h3>
+                <p id="resultText"></p>
+            </div>
+        </div>
+        
+        <div id="error" style="display: none;">
+            <div class="error">
+                <h3>Error:</h3>
+                <p id="errorText"></p>
+            </div>
+        </div>
+        
+        <div class="container" style="margin-top: 20px;">
+            <h3>📋 Test QR Codes</h3>
+            <p>Generate test QR codes to scan:</p>
+            <button onclick="generateTestQR('https://example.com')">Website URL</button>
+            <button onclick="generateTestQR('https://kittolau.github.io/kitto_app/demo/ar/model/rocket1/result.gltf')">3D Model</button>
+            <button onclick="generateTestQR('mailto:test@example.com')">Email</button>
+            <button onclick="generateTestQR('tel:+1234567890')">Phone</button>
+            
+            <div id="qrcode" style="text-align: center; margin: 20px 0;"></div>
+        </div>
+    </div>
+
+    <!-- QR Code generation library -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <script>
+        let codeReader = null;
+        let scanning = false;
+        let stream = null;
+
+        async function startScanning() {
+            const video = document.getElementById('video');
+            const status = document.getElementById('status');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const resultDiv = document.getElementById('result');
+            const errorDiv = document.getElementById('error');
+
+            try {
+                // Hide previous results
+                resultDiv.style.display = 'none';
+                errorDiv.style.display = 'none';
+
+                // Update status
+                status.textContent = 'Initializing camera...';
+                status.className = 'status scanning';
+
+                // Initialize ZXing code reader
+                codeReader = new ZXing.BrowserQRCodeReader();
+
+                // Get camera access
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+
+                video.srcObject = stream;
+                video.style.display = 'block';
+
+                // Wait for video to load
+                await new Promise(resolve => {
+                    video.onloadedmetadata = resolve;
+                });
+
+                // Start scanning
+                scanning = true;
+                status.textContent = 'Scanning for QR codes...';
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+
+                // Continuous scanning
+                codeReader.decodeFromVideoDevice(undefined, video, (result, error) => {
+                    if (result && scanning) {
+                        onQRCodeDetected(result.getText());
+                    } else if (error && !(error instanceof ZXing.NotFoundException)) {
+                        console.warn('Scan error:', error);
+                    }
+                });
+
+            } catch (error) {
+                console.error('Scanner initialization error:', error);
+                showError(`Failed to start scanner: ${error.message}`);
+                status.textContent = 'Failed to start scanner';
+                status.className = 'status error-status';
+            }
+        }
+
+        function stopScanning() {
+            scanning = false;
+            
+            if (codeReader) {
+                codeReader.reset();
+            }
+            
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+                stream = null;
+            }
+
+            const video = document.getElementById('video');
+            const status = document.getElementById('status');
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+
+            video.style.display = 'none';
+            video.srcObject = null;
+            
+            status.textContent = 'Scanner stopped';
+            status.className = 'status';
+            
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        }
+
+        function onQRCodeDetected(text) {
+            console.log('QR Code detected:', text);
+            
+            const status = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+            const resultText = document.getElementById('resultText');
+
+            status.textContent = 'QR Code detected!';
+            status.className = 'status success';
+
+            resultText.textContent = text;
+            resultDiv.style.display = 'block';
+
+            // Auto-stop scanning after detection
+            setTimeout(() => {
+                stopScanning();
+            }, 2000);
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            const errorText = document.getElementById('errorText');
+            
+            errorText.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function generateTestQR(text) {
+            const qrDiv = document.getElementById('qrcode');
+            qrDiv.innerHTML = `<p><strong>Test QR Code:</strong> ${text}</p>`;
+            
+            QRCode.toCanvas(text, { width: 200 }, (error, canvas) => {
+                if (error) {
+                    console.error('QR generation error:', error);
+                    return;
+                }
+                
+                qrDiv.appendChild(canvas);
+            });
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            stopScanning();
+        });
+    </script>
+</body>
+</html>

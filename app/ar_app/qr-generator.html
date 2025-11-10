@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>QR Code Generator for AR Models</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        #qrcode {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .preset-btn {
+            background: #28a745;
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+        
+        .download-section {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .instructions {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+        
+        .instructions h3 {
+            margin-top: 0;
+            color: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 QR Code Generator for AR Models</h1>
+        
+        <div class="instructions">
+            <h3>使用說明</h3>
+            <p>1. 選擇或輸入要生成QR碼的內容</p>
+            <p>2. 點擊「生成QR碼」按鈕</p>
+            <p>3. 下載生成的QR碼圖片</p>
+            <p>4. 在AR應用中掃描QR碼來觸發對應的3D模型</p>
+        </div>
+        
+        <div class="form-group">
+            <label for="qr-text">QR碼內容:</label>
+            <input type="text" id="qr-text" placeholder="輸入QR碼內容，例如: SPUTNIK1_MODEL">
+        </div>
+        
+        <div class="form-group">
+            <label>預設模型QR碼:</label>
+            <div class="presets">
+                <button class="preset-btn" onclick="setPreset('SPUTNIK1_MODEL')">Sputnik 1</button>
+                <button class="preset-btn" onclick="setPreset('ROCKET1_MODEL')">Rocket 1</button>
+                <button class="preset-btn" onclick="setPreset('ISS_MODEL')">Space Station</button>
+                <button class="preset-btn" onclick="setPreset('MOON_LANDING_MODEL')">Moon Landing</button>
+                <button class="preset-btn" onclick="setPreset('ASTRONAUT_MODEL')">Astronaut</button>
+                <button class="preset-btn" onclick="setPreset('https://example.com')">範例網址</button>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="qr-size">QR碼大小:</label>
+            <select id="qr-size">
+                <option value="200">小 (200x200)</option>
+                <option value="300" selected>中 (300x300)</option>
+                <option value="400">大 (400x400)</option>
+                <option value="500">特大 (500x500)</option>
+            </select>
+        </div>
+        
+        <button onclick="generateQR()">🔍 生成QR碼</button>
+        <button onclick="clearQR()">🗑️ 清除</button>
+        
+        <div id="qrcode"></div>
+        
+        <div class="download-section">
+            <button id="download-btn" onclick="downloadQR()" style="display: none;">📥 下載QR碼</button>
+        </div>
+        
+        <div class="instructions">
+            <h3>模型配置說明</h3>
+            <p>要讓QR碼觸發特定的3D模型，請在模型的 config.json 中添加以下設置：</p>
+            <pre style="background: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto;">
+{
+  "marker_type": "qrcode",
+  "qr_code": "SPUTNIK1_MODEL",
+  // ... 其他配置
+}</pre>
+            <p>其中 <code>qr_code</code> 的值應該與生成的QR碼內容完全匹配。</p>
+        </div>
+    </div>
+    
+    <script>
+        let currentQRDataURL = null;
+        
+        function setPreset(text) {
+            document.getElementById('qr-text').value = text;
+        }
+        
+        function generateQR() {
+            const text = document.getElementById('qr-text').value.trim();
+            const size = parseInt(document.getElementById('qr-size').value);
+            const qrcodeDiv = document.getElementById('qrcode');
+            const downloadBtn = document.getElementById('download-btn');
+            
+            if (!text) {
+                alert('請輸入QR碼內容！');
+                return;
+            }
+            
+            // Clear previous QR code
+            qrcodeDiv.innerHTML = '';
+            
+            const options = {
+                width: size,
+                height: size,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            };
+            
+            QRCode.toCanvas(text, options, function(error, canvas) {
+                if (error) {
+                    console.error('QR code generation error:', error);
+                    alert('生成QR碼時發生錯誤！');
+                    return;
+                }
+                
+                // Add canvas to page
+                qrcodeDiv.appendChild(canvas);
+                
+                // Store data URL for download
+                currentQRDataURL = canvas.toDataURL('image/png');
+                
+                // Show download button
+                downloadBtn.style.display = 'inline-block';
+                
+                // Add info text
+                const info = document.createElement('p');
+                info.style.marginTop = '10px';
+                info.style.color = '#666';
+                info.innerHTML = `<strong>QR碼內容:</strong> ${text}<br><strong>尺寸:</strong> ${size}x${size}px`;
+                qrcodeDiv.appendChild(info);
+            });
+        }
+        
+        function clearQR() {
+            document.getElementById('qrcode').innerHTML = '';
+            document.getElementById('download-btn').style.display = 'none';
+            currentQRDataURL = null;
+        }
+        
+        function downloadQR() {
+            if (!currentQRDataURL) {
+                alert('請先生成QR碼！');
+                return;
+            }
+            
+            const text = document.getElementById('qr-text').value.trim();
+            const link = document.createElement('a');
+            link.download = `qr-code-${text.replace(/[^a-zA-Z0-9]/g, '_')}.png`;
+            link.href = currentQRDataURL;
+            link.click();
+        }
+        
+        // Generate default QR code on load
+        window.addEventListener('load', function() {
+            document.getElementById('qr-text').value = 'SPUTNIK1_MODEL';
+            generateQR();
+        });
+    </script>
+</body>
+</html>

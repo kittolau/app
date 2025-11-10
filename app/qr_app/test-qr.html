@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test QR Code for 3D Model</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            text-align: center;
+        }
+        
+        h1 {
+            margin-bottom: 30px;
+            color: #fff;
+        }
+        
+        .qr-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            display: inline-block;
+            margin: 20px 0;
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .instructions h3 {
+            color: #90caf9;
+            margin-top: 0;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin: 10px 0;
+            line-height: 1.5;
+        }
+        
+        .model-url {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            margin: 15px 0;
+            border-left: 4px solid #90caf9;
+        }
+        
+        .button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+        }
+        
+        .button:hover {
+            transform: translateY(-2px);
+        }
+        
+        .note {
+            background: rgba(255, 193, 7, 0.2);
+            border: 1px solid rgba(255, 193, 7, 0.5);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        
+        .note strong {
+            color: #ffc107;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 QR Code Test for 3D Model Viewer</h1>
+        
+        <div class="qr-container">
+            <canvas id="qrcode"></canvas>
+        </div>
+        
+        <div class="model-url">
+            <strong>3D Model URL:</strong><br>
+            <span id="model-url-text">https://kittolau.github.io/app/ar_app/model/international_space_station/ISS_stationary.glb</span>
+        </div>
+        
+        <a href="../qr_app/index.html" class="button">📱 Open QR Scanner</a>
+        <button onclick="downloadQR()" class="button">💾 Download QR Code</button>
+        
+        <div class="instructions">
+            <h3>📋 Testing Instructions</h3>
+            <ol>
+                <li><strong>Print or Display QR Code:</strong> Print this QR code or display it on another device</li>
+                <li><strong>Open QR Scanner:</strong> Click "Open QR Scanner" button above or navigate to the QR app</li>
+                <li><strong>Scan QR Code:</strong> Point your camera at the QR code</li>
+                <li><strong>View 3D Model:</strong> When detected, click "🎯 View 3D Model" button</li>
+                <li><strong>Interact with Model:</strong> Use the back button (←) to return to scanner</li>
+            </ol>
+        </div>
+        
+        <div class="note">
+            <strong>Note:</strong> The 3D model URL points to a GLTF file. Make sure your server is running and the model file is accessible at the specified URL. You can modify the URL below and regenerate the QR code if needed.
+        </div>
+        
+        <div style="margin-top: 30px;">
+            <h3>🔧 Custom Model URL</h3>
+            <input type="text" id="custom-url" placeholder="Enter your 3D model URL here" 
+                   style="width: 100%; padding: 12px; border-radius: 8px; border: none; margin: 10px 0; font-size: 14px;">
+            <button onclick="generateCustomQR()" class="button">🔄 Generate New QR</button>
+        </div>
+    </div>
+    
+    <script>
+        const defaultModelUrl = 'https://kittolau.github.io/app/ar_app/model/international_space_station/ISS_stationary.glb';
+        let currentUrl = defaultModelUrl;
+        
+        // Generate QR code on page load
+        function generateQR(url) {
+            const canvas = document.getElementById('qrcode');
+            const urlDisplay = document.getElementById('model-url-text');
+            
+            QRCode.toCanvas(canvas, url, {
+                width: 300,
+                height: 300,
+                margin: 2,
+                color: {
+                    dark: '#000000',
+                    light: '#FFFFFF'
+                }
+            }, function(error) {
+                if (error) {
+                    console.error('QR code generation error:', error);
+                } else {
+                    console.log('✅ QR code generated for:', url);
+                    urlDisplay.textContent = url;
+                    currentUrl = url;
+                }
+            });
+        }
+        
+        function generateCustomQR() {
+            const customUrl = document.getElementById('custom-url').value.trim();
+            if (customUrl) {
+                generateQR(customUrl);
+            } else {
+                alert('Please enter a valid URL');
+            }
+        }
+        
+        function downloadQR() {
+            const canvas = document.getElementById('qrcode');
+            const link = document.createElement('a');
+            link.download = '3d-model-qr-code.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+        
+        // Generate initial QR code
+        window.addEventListener('load', function() {
+            generateQR(defaultModelUrl);
+        });
+    </script>
+</body>
+</html>
